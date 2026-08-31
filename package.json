@@ -1,14 +1,57 @@
 {
-  "name": "aiemcee",
+  "name": "@mrigankad/aiemcee",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
   "description": "Narrated product demo videos, generated end to end: Edge TTS narration, Playwright screen capture, Remotion motion graphics, ffmpeg assembly.",
+  "license": "MIT",
+  "homepage": "https://github.com/mrigankad/AiEmcee#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrigankad/AiEmcee.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mrigankad/AiEmcee/issues"
+  },
+  "keywords": [
+    "video-generation",
+    "demo-video",
+    "product-demo",
+    "screencast",
+    "remotion",
+    "playwright",
+    "ffmpeg",
+    "edge-tts",
+    "text-to-speech",
+    "motion-graphics",
+    "screen-recording"
+  ],
   "engines": {
     "node": ">=20"
   },
+  "bin": {
+    "aiemcee": "bin/aiemcee.mjs"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "remotion",
+    "!remotion/out",
+    "!remotion/node_modules",
+    "docs",
+    "examples",
+    "assets",
+    "design.tokens.json",
+    "narration.json",
+    "scenes.mjs",
+    "video.config.mjs"
+  ],
   "scripts": {
     "doctor": "node scripts/doctor.mjs",
+    "validate": "node scripts/validate.mjs",
     "narrate": "node scripts/narrate.mjs",
     "motion": "node remotion/render.mjs",
     "capture": "node scripts/capture.mjs",

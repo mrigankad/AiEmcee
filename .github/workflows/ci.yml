@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: |
+          npm ci
+          npm --prefix remotion ci
+
+      - name: Typecheck the compositions
+        run: npm --prefix remotion exec tsc -- --noEmit
+
+      # Catches a sequence entry with no choreography, an unregistered
+      # composition, a duplicate id — everything that would otherwise surface
+      # twenty minutes into a build. Needs no ffmpeg, edge-tts or browser.
+      - name: Validate the project
+        run: npm run validate
+
+      - name: Scaffold smoke test
+        run: |
+          node bin/aiemcee.mjs --version
+          node bin/aiemcee.mjs init /tmp/smoke
+          test -f /tmp/smoke/package.json
+          test -f /tmp/smoke/.gitignore
+          test -f /tmp/smoke/scripts/compose.mjs
+          test -f /tmp/smoke/remotion/src/Root.tsx
+          echo "scaffold ok"
+
+      - name: Check the package contents
+        run: npm pack --dry-run

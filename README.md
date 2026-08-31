@@ -14,9 +14,17 @@ No editor. No timeline. No manual sync.
 
 <br>
 
+[![CI](https://github.com/mrigankad/AiEmcee/actions/workflows/ci.yml/badge.svg)](https://github.com/mrigankad/AiEmcee/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/mrigankad/AiEmcee?label=release)](https://github.com/mrigankad/AiEmcee/releases)
+[![Node](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+<br>
+
 [Quickstart](docs/01-quickstart.md) ·
 [Architecture](docs/02-architecture.md) ·
 [Prompt library](docs/prompts/) ·
+[Changelog](CHANGELOG.md) ·
 [Troubleshooting](docs/09-troubleshooting.md)
 
 <br>
@@ -168,15 +176,41 @@ All good. Run `npm run build`.
 
 ## Quickstart
 
+**Scaffold a project** — the usual way. Creates a standalone project with no
+runtime link back to this package, so upgrading the CLI never breaks a video
+you already made.
+
 ```bash
-git clone https://github.com/mrigankad/AiEmcee.git
-cd AiEmcee
+npx @mrigankad/aiemcee init my-video
+cd my-video
 
 npm run setup       # node deps, remotion deps, Chromium
 npm run doctor      # verify the toolchain
 
 # start YOUR app in production mode, on the port in video.config.mjs
 npm run build
+```
+
+<details>
+<summary>The package lives on GitHub Packages, so npm needs one line of config</summary>
+
+<br>
+
+```bash
+echo "@mrigankad:registry=https://npm.pkg.github.com" >> ~/.npmrc
+npm login --scope=@mrigankad --registry=https://npm.pkg.github.com
+```
+
+GitHub Packages requires authentication even for public packages. If you would
+rather skip that, clone the repo instead — it is the same thing.
+
+</details>
+
+**Or clone it** — identical result, no registry setup.
+
+```bash
+git clone https://github.com/mrigankad/AiEmcee.git my-video
+cd my-video && npm run setup && npm run doctor && npm run build
 ```
 
 Result: `out/demo.mp4`.
@@ -191,6 +225,7 @@ Full walkthrough — including how to seed data and choose a voice — in
 | Command | Does |
 | --- | --- |
 | `npm run doctor` | preflight — every external tool, plus config validation |
+| `npm run validate` | config + choreography checks, no external tools needed |
 | `npm run narrate` | `narration.json` → `tts/*.mp3` + `durations.json` |
 | `npm run motion` | Remotion → explainer clips + lower-third stills |
 | `npm run capture` | Playwright drives your app → `raw/*.webm` |
