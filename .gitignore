@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Generated media — everything here rebuilds from source. Never commit it.
+raw/
+tts/
+work/
+out/
+remotion/out/
+
+# Large source media you drop in yourself (logo stings, music beds).
+# Delete these two lines if your intro asset is small enough to track.
+assets/*.mp4
+assets/*.mov
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db

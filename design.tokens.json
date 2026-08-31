@@ -1,0 +1,47 @@
+{
+  "$comment": "Single source of truth for look and format. Read by video.config.mjs (Node) and remotion/src/theme.ts (TypeScript). Change it here and both the ffmpeg pipeline and the Remotion compositions follow.",
+
+  "video": {
+    "width": 1600,
+    "height": 900,
+    "fps": 30
+  },
+
+  "fonts": {
+    "display": "Michroma",
+    "displayWeights": ["400"],
+    "sans": "Geist",
+    "sansWeights": ["400", "600"],
+    "mono": "ui-monospace, SFMono-Regular, Menlo, monospace"
+  },
+
+  "color": {
+    "page": "#f2f2f2",
+    "container": "#ffffff",
+    "raised": "#fafafa",
+
+    "text": "#101010",
+    "secondary": "#464646",
+    "tertiary": "#737373",
+
+    "muted": "rgba(0,0,0,0.08)",
+    "stroke": "rgba(0,0,0,0.14)",
+
+    "brand": "#ff7b1c",
+    "brandLight": "#ffa12b",
+    "brandDeep": "#dc440c",
+    "brandSoft": "#fff6ed",
+
+    "success": "#3fae69",
+    "successSoft": "rgba(63,174,105,0.12)",
+    "error": "#c62830",
+    "errorSoft": "#fff1f2"
+  },
+
+  "cursor": {
+    "fill": "#ffffff",
+    "stroke": "#111111",
+    "ripple": "rgba(255,124,28,0.9)",
+    "size": 22
+  }
+}

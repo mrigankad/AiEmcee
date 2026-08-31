@@ -1,0 +1,32 @@
+[
+  {
+    "id": "01-hook",
+    "title": "The promise, in one sentence",
+    "text": "What if your app could test itself? Meet Acme, the platform that turns a code repository, or a live URL, into a runnable test suite in minutes."
+  },
+  {
+    "id": "02-problem",
+    "title": "Why anyone should care",
+    "text": "Teams spend weeks writing and maintaining automated tests. Suites break with every interface change. And most tools produce shallow results that nobody trusts."
+  },
+  {
+    "id": "03-onboarding",
+    "title": "Getting in",
+    "text": "Getting started takes seconds. Connect your repository, or simply paste your app's URL. No configuration files. No framework setup. Nothing written by hand."
+  },
+  {
+    "id": "03b-pipeline",
+    "title": "The whole loop, once",
+    "text": "Here is the loop. Connect your app. Acme explores it. You approve every step. Then it writes the code, runs it in the cloud, and heals what breaks."
+  },
+  {
+    "id": "04-feature",
+    "title": "The thing that wins the demo",
+    "text": "Now Acme explores your application like a real user. It crawls every page, maps complete journeys, and listens to network traffic to discover your APIs, automatically."
+  },
+  {
+    "id": "05-cta",
+    "title": "What to do next",
+    "text": "From repository to reliable tests, in under ten minutes. Start free today. Paste your URL, and ship with confidence."
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "name": "claude-video-generation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Narrated product demo videos, generated end to end: Edge TTS narration, Playwright screen capture, Remotion motion graphics, ffmpeg assembly.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "narrate": "node scripts/narrate.mjs",
+    "motion": "node remotion/render.mjs",
+    "capture": "node scripts/capture.mjs",
+    "compose": "node scripts/compose.mjs",
+    "build": "npm run narrate && npm run motion && npm run capture && npm run compose",
+    "studio": "npm --prefix remotion run studio",
+    "setup": "npm install && npm --prefix remotion install && npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
