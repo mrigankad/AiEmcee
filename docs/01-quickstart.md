@@ -6,8 +6,8 @@ one, most of it spent writing the script rather than running commands.
 ## 1. Install
 
 ```bash
-git clone <your-fork> claude-video-generation
-cd claude-video-generation
+git clone https://github.com/mrigankad/AiEmcee.git
+cd AiEmcee
 npm run setup
 npm run doctor
 ```

@@ -1,6 +1,6 @@
 <div align="center">
 
-# Claude Video Generation
+# AiEmcee
 
 **Narrated product demo videos, generated end to end from a text file.**
 
@@ -9,6 +9,8 @@ the motion graphics, the titles, the cut — is produced by running four
 commands.
 
 No editor. No timeline. No manual sync.
+
+<sub>*Emcee, as in master of ceremonies: the thing that narrates the show.*</sub>
 
 <br>
 
