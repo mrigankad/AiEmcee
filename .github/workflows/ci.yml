@@ -10,11 +10,11 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install
@@ -23,7 +23,7 @@ jobs:
           npm --prefix remotion ci
 
       - name: Typecheck the compositions
-        run: npm --prefix remotion exec tsc -- --noEmit
+        run: npm --prefix remotion run typecheck
 
       # Catches a sequence entry with no choreography, an unregistered
       # composition, a duplicate id — everything that would otherwise surface
