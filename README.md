@@ -126,6 +126,48 @@ timing lives.
 
 ---
 
+## Direction
+
+A correct film is not automatically a good one. On top of the metronome,
+every film is **directed**, with the craft of [/brag](https://github.com/latent-spaces/brag)
+applied to long-form demos:
+
+- **Transitions** between scenes, placed in the silent gap between lines so
+  the voice always lands on a settled picture.
+- **Focus moves** inside product footage. The camera eases in on the part of
+  the UI that matters, dims the rest and names it. A screen recording stops
+  asking the viewer to find the point on their own.
+- **A tone**: `polished`, `default`, `cinematic`, `app-store` or `deadpan`.
+  It sets transitions, camera, grade, motion springs and sound cues together.
+- **A directed voice**: each line is spoken a sentence at a time, with pace
+  and pitch from its intent (`hook`, `problem`, `feature`, `payoff`, …),
+  deliberate pauses and `[beat]`s, and a mastering chain, so free TTS stops
+  sounding flat. `npm run narrate -- --audition` compares voices by ear.
+- **Sound design**: a music bed that ducks under the narration, effects cued
+  from the edit, and the master normalised to -16 LUFS.
+- **An AI presenter**: the Wayam orb, which speaks the narration (it moves
+  with the voice) and shows it as word-by-word captions. It hosts openings and
+  closings full screen, and presents product scenes from the corner.
+- **A poster frame** baked in as frame 0, and a **contact sheet** of every
+  scene, transition, title and focus move to review before anyone watches.
+
+```js
+{
+  id: "05-pdi",
+  from: "clip",
+  clip: { src: DEMO, start: 56.8, end: 70.35 },
+  focus: [
+    { at: 10.8, until: 12.8, box: [0.76, 0.87, 0.15, 0.06], label: "18,705 modules in one lot" },
+  ],
+},
+```
+
+Or let Claude do it: run **`/emcee`** in this repo. It inspects the footage,
+places the focus moves, builds, reviews the stills and fixes what is wrong.
+See **[docs/10-direction.md](docs/10-direction.md)**.
+
+---
+
 ## Why it is built this way
 
 **Screen capture for the product, motion graphics for the argument.**
@@ -141,7 +183,8 @@ eight.
 overlay, a hydration warning or a hot-reload toast at any moment, and there is
 no way to remove that from footage afterwards.
 
-**Nothing binary is committed.** Clone, `npm run build`, get the video.
+**No generated media is committed.** Clone, `npm run build`, get the video.
+The only binaries in the repo are a handful of small CC0 sound effects.
 
 ---
 
@@ -150,7 +193,7 @@ no way to remove that from footage afterwards.
 | Tool | Why | Install |
 | --- | --- | --- |
 | Node 20+ | runs the pipeline | [nodejs.org](https://nodejs.org) |
-| ffmpeg + ffprobe | cuts, overlays, muxes | `winget install Gyan.FFmpeg` · `brew install ffmpeg` · `apt install ffmpeg` |
+| ffmpeg + ffprobe | cuts clips, mixes and masters the sound, muxes | `winget install Gyan.FFmpeg` · `brew install ffmpeg` · `apt install ffmpeg` |
 | edge-tts | the voiceover — free, no API key | `pip install edge-tts` |
 | Chromium | drives your app | installed by `npm run setup` |
 
@@ -226,11 +269,12 @@ Full walkthrough — including how to seed data and choose a voice — in
 | --- | --- |
 | `npm run doctor` | preflight — every external tool, plus config validation |
 | `npm run validate` | config + choreography checks, no external tools needed |
-| `npm run narrate` | `narration.json` → `tts/*.mp3` + `durations.json` |
-| `npm run motion` | Remotion → explainer clips + lower-third stills |
+| `npm run narrate` | `narration.json` → directed `tts/*.mp3` + caption cues + `durations.json` (`-- --audition` to compare voices) |
+| `npm run motion` | Remotion → preview renders of single motion scenes (optional) |
 | `npm run capture` | Playwright drives your app → `raw/*.webm` |
-| `npm run compose` | ffmpeg → `out/demo.mp4` |
-| `npm run build` | all four, in order |
+| `npm run clip` | cuts scene footage out of an existing recording → `raw/*.mp4` |
+| `npm run compose` | the directed film: Remotion picture + ffmpeg sound → `out/demo.mp4`, poster, review stills |
+| `npm run build` | every stage, in order |
 | `npm run studio` | Remotion Studio — scrubbable timeline, hot reload |
 
 Every step takes an optional scene id, so you iterate on one thing at a time:
@@ -238,8 +282,9 @@ Every step takes an optional scene id, so you iterate on one thing at a time:
 ```bash
 npm run narrate -- 05-cta      # reworded one line
 npm run capture -- 05-cta      # re-record one scene
-npm run motion  -- Problem     # re-render one composition
-npm run compose                # re-cut the film — under a minute
+npm run motion  -- Problem     # preview one composition
+npm run compose                # render the film
+npm run compose -- --sound-only  # remix only, reusing the last picture
 ```
 
 ---
@@ -380,6 +425,7 @@ scripts/
   doctor.mjs            preflight
   narrate.mjs           edge-tts + duration measurement
   capture.mjs           Playwright recording
+  clip.mjs              cuts scenes out of an existing recording
   compose.mjs           ffmpeg assembly
   lib/
     config.mjs          config + narration loading, path helpers
@@ -411,10 +457,11 @@ examples/parikshan/     a complete shipped film, annotated
 | **[04 Scene choreography](docs/04-scene-choreography.md)** | the Scene API, and how to time a browser to a voice |
 | **[05 Motion graphics](docs/05-motion-graphics.md)** | Remotion compositions, timing, adding your own |
 | **[06 Styling](docs/06-styling.md)** | the design system, and how to rebrand the whole thing |
-| **[07 Compositing](docs/07-compositing.md)** | what ffmpeg does, filter by filter |
+| **[07 Compositing](docs/07-compositing.md)** | how the film is assembled: timeline, picture, sound |
 | **[08 Prompting Claude](docs/08-prompting-claude.md)** | how to drive this repo with an agent |
 | **[Prompt library](docs/prompts/)** | copy-paste prompts for each stage |
 | **[09 Troubleshooting](docs/09-troubleshooting.md)** | every failure we have hit, and its fix |
+| **[10 Direction](docs/10-direction.md)** | tone, transitions, focus moves, sound, poster, review |
 
 ---
 

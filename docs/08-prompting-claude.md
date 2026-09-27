@@ -170,7 +170,7 @@ Read docs/05-motion-graphics.md and docs/06-styling.md.
    light and deep stops of the same hue for the gradients, plus a soft
    tint. Update cursor.ripple to match.
 
-2. Rewrite the defaultProps for Problem and Pipeline in Root.tsx from
+2. Rewrite the props for Problem and Pipeline in remotion/src/scenes.ts from
    scenes 02 and 03b of narration.json. Re-time the Problem beat cues
    against the 11.4s line.
 

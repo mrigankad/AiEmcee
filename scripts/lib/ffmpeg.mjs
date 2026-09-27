@@ -1,11 +1,25 @@
 /** Thin ffmpeg / ffprobe wrappers. Everything the compositor needs, nothing else. */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
-/** Run ffmpeg, quiet unless it actually fails. */
-export function ff(args) {
+/**
+ * Run ffmpeg, quiet unless it actually fails.
+ *
+ * `{ stderr: true }` runs at info level and returns stderr as a string, for
+ * filters that report through the log (loudnorm, volumedetect).
+ */
+export function ff(args, { stderr = false } = {}) {
   try {
+    if (stderr) {
+      const run = spawnSync("ffmpeg", ["-hide_banner", "-nostats", "-loglevel", "info", ...args], {
+        encoding: "utf8",
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      if (run.status !== 0) throw Object.assign(new Error("ffmpeg failed"), { stderr: run.stderr });
+      return run.stderr;
+    }
     return execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", ...args], {
       stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
     });
   } catch (err) {
     const detail = err.stderr?.toString().trim();

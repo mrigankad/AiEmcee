@@ -1,20 +1,37 @@
 /**
- * The composition registry, and the copy that fills each one.
+ * The composition registry.
  *
- * Durations are written in seconds via sec() and must match the narration
- * duration for that scene id in tts/durations.json. `npm run narrate` prints
- * every length; copy the number for the motion scenes in here. If a
- * composition is shorter than its line, compose.mjs freeze-frames the tail,
- * which is visible and ugly.
+ * `Film` is the whole video: compose.mjs renders it from the timeline, and it
+ * renders the motion scenes and lower thirds inline, at their exact slot
+ * lengths. The other compositions are registered so each scene can be worked
+ * on alone in the studio (`npm run studio`); their copy lives in scenes.ts.
+ *
+ * Standalone durations below are for previewing only. Inside the Film a scene
+ * always runs for exactly its narration slot, from tts/durations.json.
  */
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, staticFile } from "remotion";
 
-import { EndCard, type EndCardProps } from "./compositions/EndCard";
+import { AvatarPreview } from "./avatar/AvatarPreview";
+import { EndCard } from "./compositions/EndCard";
 import { LowerThird, type LowerThirdProps } from "./compositions/LowerThird";
-import { Pipeline, type PipelineProps } from "./compositions/Pipeline";
-import { Problem, type ProblemProps } from "./compositions/Problem";
+import { Pipeline } from "./compositions/Pipeline";
+import { Problem } from "./compositions/Problem";
+import { Film, type FilmProps } from "./film/Film";
+import type { Timeline } from "./film/types";
+import { endCardProps, pipelineProps, problemProps } from "./scenes";
 import { FPS, H, W, sec } from "./theme";
+
+/** Reads the timeline compose.mjs staged into public/, unless one is passed as a prop. */
+async function loadTimeline(props: FilmProps): Promise<Timeline | null> {
+  if (props.timeline) return props.timeline;
+  try {
+    const res = await fetch(staticFile("film/timeline.json"));
+    return res.ok ? ((await res.json()) as Timeline) : null;
+  } catch {
+    return null;
+  }
+}
 
 export const RemotionRoot: React.FC = () => {
   const frame = { fps: FPS, width: W, height: H };
@@ -22,94 +39,38 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        id="Problem"
-        component={Problem}
-        durationInFrames={sec(11.4)}
+        id="Film"
+        component={Film}
+        durationInFrames={sec(1)}
         {...frame}
-        defaultProps={
-          {
-            eyebrow: "The cost today",
-            headline: ["Teams still spend weeks", "on work nobody wants."],
-            beats: [
-              {
-                at: sec(0.3),
-                kicker: "Weeks of setup",
-                title: "Doing it by hand",
-                body: "It takes weeks to stand up, then the same weeks again every quarter.",
-              },
-              {
-                at: sec(3.6),
-                kicker: "Every change",
-                title: "And then it breaks",
-                body: "One rename, and half of it fails. Maintenance quietly becomes the job.",
-              },
-              {
-                at: sec(7.1),
-                kicker: "Shallow tooling",
-                title: "Output nobody trusts",
-                body: "Most tools cover the easy path and skip the cases that actually matter.",
-              },
-            ],
-          } satisfies ProblemProps
-        }
+        defaultProps={{ timeline: null } satisfies FilmProps}
+        calculateMetadata={async ({ props }) => {
+          const timeline = await loadTimeline(props);
+          if (!timeline) return { props: { timeline: null } };
+          return {
+            durationInFrames: Math.round(timeline.total * timeline.fps),
+            fps: timeline.fps,
+            width: timeline.width,
+            height: timeline.height,
+            props: { timeline },
+          };
+        }}
       />
 
-      <Composition
-        id="Pipeline"
-        component={Pipeline}
-        durationInFrames={sec(13.0)}
-        {...frame}
-        defaultProps={
-          {
-            eyebrow: "How it works",
-            headline: ["One loop. From input", "to a result that holds."],
-            steps: [
-              { id: "01", label: "Connect", hint: "Repo or URL" },
-              { id: "02", label: "Explore", hint: "Crawl like a user" },
-              { id: "03", label: "Approve", hint: "Plain-language plan" },
-              { id: "04", label: "Generate", hint: "Code you own" },
-              { id: "05", label: "Run", hint: "Three browsers" },
-              { id: "06", label: "Heal", hint: "Locators rewrite" },
-            ],
-            payoff: {
-              labelBefore: "Locator",
-              labelAfter: "Healed",
-              before: "#pay-btn",
-              after: "getByRole('button', { name: 'Place order' })",
-            },
-          } satisfies PipelineProps
-        }
-      />
+      <Composition id="Problem" component={Problem} durationInFrames={sec(14.42)} {...frame} defaultProps={problemProps} />
 
-      <Composition
-        id="EndCard"
-        component={EndCard}
-        durationInFrames={sec(3.2)}
-        {...frame}
-        defaultProps={
-          {
-            // Drop your own SVG or PNG in remotion/public and name it here.
-            mark: null,
-            title: "Your product",
-            kicker: "A one-line positioning statement",
-            tagline: "The call to action, in six words or fewer.",
-          } satisfies EndCardProps
-        }
-      />
+      <Composition id="Pipeline" component={Pipeline} durationInFrames={sec(14.9)} {...frame} defaultProps={pipelineProps} />
 
-      {/*
-        Rendered as a still, one PNG per titled scene, with props supplied on
-        the command line by render.mjs. The duration only exists so the fade
-        keyframes have a range; frame 24 is grabbed at full opacity.
-      */}
+      <Composition id="EndCard" component={EndCard} durationInFrames={sec(3.9)} {...frame} defaultProps={endCardProps} />
+
+      <Composition id="Avatar" component={AvatarPreview} durationInFrames={sec(8)} {...frame} />
+
       <Composition
         id="LowerThird"
         component={LowerThird}
-        durationInFrames={sec(2.5)}
+        durationInFrames={sec(3.6)}
         {...frame}
-        defaultProps={
-          { kicker: "Section", title: "What this part shows" } satisfies LowerThirdProps
-        }
+        defaultProps={{ kicker: "Section", title: "What this part shows" } satisfies LowerThirdProps}
       />
     </>
   );

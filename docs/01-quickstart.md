@@ -159,9 +159,8 @@ the timing method.
 ## 7. Render, record, cut
 
 ```bash
-npm run motion     # Remotion: explainers + lower thirds
 npm run capture    # Playwright: your app
-npm run compose    # ffmpeg: the finished film
+npm run compose    # Remotion + ffmpeg: the finished, directed film
 ```
 
 `compose` prints a drift line. It should be under a few milliseconds:
