@@ -1,32 +1,62 @@
 [
   {
     "id": "01-hook",
-    "title": "The promise, in one sentence",
-    "text": "What if your app could test itself? Meet Acme, the platform that turns a code repository, or a live URL, into a runnable test suite in minutes."
+    "title": "Half a million modules",
+    "delivery": "hook",
+    "text": "A utility-scale solar project ships half a million modules. [beat] Meet Ree Doms, a Wayam AI product."
+  },
+  {
+    "id": "01b-workspace",
+    "title": "One workspace per project",
+    "delivery": "explain",
+    "text": "One workspace per project. Every module is accounted for. The flash data, the inspections, and the paper trail behind each one."
   },
   {
     "id": "02-problem",
-    "title": "Why anyone should care",
-    "text": "Teams spend weeks writing and maintaining automated tests. Suites break with every interface change. And most tools produce shallow results that nobody trusts."
+    "title": "The record lives in spreadsheets",
+    "delivery": "problem",
+    "text": "Today, that record lives in spreadsheets. Flash data in one file, inspection reports in another, serial numbers on paper at the gate. When a module underperforms three years in, [beat] nobody can prove where it came from."
   },
   {
-    "id": "03-onboarding",
-    "title": "Getting in",
-    "text": "Getting started takes seconds. Connect your repository, or simply paste your app's URL. No configuration files. No framework setup. Nothing written by hand."
+    "id": "03-loop",
+    "title": "One chain of custody",
+    "delivery": "explain",
+    "text": "Ree Doms closes that gap with one chain of custody. The supplier uploads. Every lot is verified. The shop floor is inspected. Modules ship, get scanned into position, and reconcile against the plan."
   },
   {
-    "id": "03b-pipeline",
-    "title": "The whole loop, once",
-    "text": "Here is the loop. Connect your app. Acme explores it. You approve every step. Then it writes the code, runs it in the cloud, and heals what breaks."
+    "id": "04-traceability",
+    "title": "Any serial, its whole history",
+    "delivery": "feature",
+    "text": "Type any module serial number, and the whole history comes back. Flash test values, junction box, bin, pallet, and the electroluminescence image taken on the line. One search. [beat] Full provenance."
   },
   {
-    "id": "04-feature",
-    "title": "The thing that wins the demo",
-    "text": "Now Acme explores your application like a real user. It crawls every page, maps complete journeys, and listens to network traffic to discover your APIs, automatically."
+    "id": "05-pdi",
+    "title": "Every lot, checked against the file",
+    "delivery": "feature",
+    "text": "Pre-dispatch inspection runs against the supplier's own file. Ree Doms reads every lot offered, eighteen thousand modules at a time, and flags any serial number that does not match what was actually built."
   },
   {
-    "id": "05-cta",
-    "title": "What to do next",
-    "text": "From repository to reliable tests, in under ten minutes. Start free today. Paste your URL, and ship with confidence."
+    "id": "06-inspections",
+    "title": "The shop floor, on the record",
+    "delivery": "feature",
+    "text": "Inspections are structured, not freeform. Date, supplier, shift, then every stage of the line recorded against its specification, with non-conformance captured where it happens."
+  },
+  {
+    "id": "07-scanning",
+    "title": "Which module, in which row",
+    "delivery": "feature",
+    "text": "At site, the supervisor scans each panel into its table position. Row by row, the as-built map fills in."
+  },
+  {
+    "id": "08-summary",
+    "title": "One number set, live",
+    "delivery": "payoff",
+    "text": "Management sees the whole project as one live set of numbers. Planned against verified, in a single view."
+  },
+  {
+    "id": "09-cta",
+    "title": "Every module has a record",
+    "delivery": "close",
+    "text": "From the factory line, to the row it stands in. Every module carries a record. One search brings the whole of it back. That is Ree Doms. [beat] A Wayam AI product."
   }
 ]

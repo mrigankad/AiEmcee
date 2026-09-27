@@ -16,8 +16,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { chromium } from "playwright";
-
 import { at, ensureDir, loadConfig, loadDurations, resetDir } from "./lib/config.mjs";
 import { Scene, cursorInitScript } from "./lib/scene.mjs";
 
@@ -31,8 +29,15 @@ const outDir = ensureDir(at(config.paths.raw));
 const planned = config.sequence.filter((s) => s.from === "capture" && (!only || s.id === only));
 
 if (!planned.length) {
-  console.error(only ? `no captured scene called "${only}"` : "no captured scenes in sequence");
-  process.exit(1);
+  // Asking for a scene that is not there is a mistake. Having no captured
+  // scenes at all is a legitimate shape of film — every product scene may be
+  // a clip — so `npm run build` must pass straight through it.
+  if (only) {
+    console.error(`no captured scene called "${only}"`);
+    process.exit(1);
+  }
+  console.log("no captured scenes in the sequence — nothing to record");
+  process.exit(0);
 }
 
 for (const scene of planned) {
@@ -42,6 +47,10 @@ for (const scene of planned) {
 }
 
 console.log(`recording ${planned.length} scene(s) against ${config.capture.baseUrl}\n`);
+
+// Imported here, not at the top, so a film made entirely of clips and motion
+// never needs Playwright or a downloaded browser installed at all.
+const { chromium } = await import("playwright");
 
 const browser = await chromium.launch({ args: config.capture.launchArgs });
 const initScript = cursorInitScript(config.tokens, config.capture.hide);

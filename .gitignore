@@ -7,11 +7,20 @@ tts/
 work/
 out/
 remotion/out/
+remotion/public/film/
 
-# Large source media you drop in yourself (logo stings, music beds).
-# Delete these two lines if your intro asset is small enough to track.
+# Large source media you drop in yourself (logo stings, music beds, and the
+# recordings that `from: "clip"` scenes are cut out of).
+# Delete these lines if your source media is small enough to track.
 assets/*.mp4
 assets/*.mov
+assets/*.mp3
+assets/*.wav
+assets/music/
+Redoms/
+
+# Personal Claude Code settings. The shared /emcee skill in .claude/skills/ is tracked.
+.claude/settings.local.json
 
 # Logs and OS noise
 *.log

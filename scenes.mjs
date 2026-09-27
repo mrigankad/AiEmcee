@@ -1,8 +1,15 @@
 /**
  * Choreography: what the browser does during each captured scene.
  *
- * One exported function per scene id. Only ids marked `from: "capture"` in
- * video.config.mjs are recorded — motion scenes are Remotion's job.
+ * This film has none. RE-DOMS is not running on this machine, so every product
+ * scene is cut out of the existing screen recording instead — see the
+ * `from: "clip"` entries in video.config.mjs and scripts/clip.mjs.
+ *
+ * When RE-DOMS can be run in production mode against capture.baseUrl, moving a
+ * scene to live capture is two edits: flip its `from` to "capture" in
+ * video.config.mjs, and write its function here. Everything downstream —
+ * timing, lower thirds, the cut — is identical either way, because both
+ * sources land the same file in raw/.
  *
  * How to write one
  * ----------------
@@ -10,9 +17,9 @@
  * number is your budget. Then storyboard the line into beats and give each
  * beat roughly the seconds it is spoken over:
  *
- *   "It crawls every page"        -> land on the crawl view, hold 3s
- *   "maps complete journeys"      -> scroll to the map, hold 2s
- *   "and discovers your APIs"     -> click the API tab, hold 2s
+ *   "Type any module serial number"   -> type into the search box, hold 2s
+ *   "and the whole history comes back" -> submit, hold 3s
+ *   "and the electroluminescence image" -> scroll to the EL panel, hold 3s
  *
  * Rules that keep footage watchable
  * ---------------------------------
@@ -32,50 +39,18 @@
  *   s.scroll(offset, ms, sel?)         eased scroll, auto-picks the scroller
  *   s.dragSlider(sel, [0.4, 0.7])      drag a range input
  *   s.main                             "main", the usual app-shell scroller
+ *
+ * A worked example, for when the app is available:
+ *
+ *   "04-traceability": async (s) => {
+ *     await s.goto("/traceability");
+ *     await s.wait(1.4);
+ *     await s.type("input[placeholder*='Scan or Search']", "WS09249038922215", 60);
+ *     await s.click("button[type=submit]", { after: 1200 });
+ *     await s.wait(3.2);                          // the EL image resolves
+ *     await s.scroll(320, 1400, s.main);          // down to the flash values
+ *     await s.wait(2.4);
+ *   },
  */
 
-export const SCENES = {
-  "01-hook": async (s) => {
-    await s.goto("/");
-    await s.wait(0.9);
-
-    // Typing into the hero field is the whole product promise in one gesture.
-    await s.type("#hero-url", "https://acme.demo", 70);
-    await s.moveTo("form button");
-    await s.wait(0.6);
-
-    await s.scroll(420, 1600);
-    await s.wait(0.8);
-  },
-
-  "03-onboarding": async (s) => {
-    await s.goto("/onboarding");
-    await s.wait(0.9);
-
-    await s.click("text=Continue", { after: 700 });
-    await s.click("text=Paste a live URL", { after: 600 });
-    await s.wait(0.9);
-
-    await s.click("text=Continue", { after: 800 });
-    await s.wait(0.9);
-  },
-
-  "04-feature": async (s) => {
-    await s.goto("/projects/demo/discovery");
-    // This page animates itself for about ten seconds; the scene's only job is
-    // to arrive on time and get out of the way.
-    await s.wait(9.8);
-    await s.wait(1.2);
-  },
-
-  "05-cta": async (s) => {
-    await s.goto("/");
-    await s.wait(1.2);
-
-    // Close the loop: the same field as the opening shot, now addressed to
-    // the viewer's own app.
-    await s.type("#hero-url", "https://your-app.com", 65);
-    await s.moveTo("form button");
-    await s.wait(1.6);
-  },
-};
+export const SCENES = {};

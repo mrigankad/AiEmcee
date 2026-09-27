@@ -15,8 +15,8 @@ duration is measured with `ffprobe`, and those numbers are written to
 `tts/durations.json`. Everything downstream reads them:
 
 - **capture** holds the last frame of a scene until the clip outlasts its line
-- **compose** cuts every clip to exactly `narration + gap`
-- **compose** builds the audio track from the same numbers, in the same order
+- **compose** gives every scene exactly `narration + gap` on one timeline
+- **compose** renders the picture and mixes the sound from that same timeline
 
 Two timelines generated from one source of truth cannot drift. That is the
 whole trick, and it is why nothing here has a sync step.
@@ -41,28 +41,24 @@ one line costs one round trip, not thirteen.
 `durations.json` is regenerated on every run, including for cached lines, so it
 is always complete even when you narrate a single scene.
 
-### 2. motion — `remotion/render.mjs`
-
-```
-video.config.mjs sequence ──▶ Remotion ──▶ remotion/out/<composition>.mp4
-                                           remotion/out/lt-<id>.png
-```
+### 2. motion — `remotion/src/`
 
 Remotion renders React components to video, frame by frame, in headless
-Chromium. It is used here for two things:
+Chromium. It is used for three things, all rendered inside the one `Film`
+composition by `compose`:
 
 **Explainer scenes** (`from: "motion"`) — full frames that make an argument
 rather than showing a UI. The problem statement, the how-it-works diagram, the
-end card.
+end card. Their copy lives in `remotion/src/scenes.ts`.
 
 **Lower thirds** (`lowerThird: {...}`) — the animated title cards that name a
-section. These render as a single **transparent PNG still**, not as video.
-`compose` then fades one in and out over the footage with ffmpeg. One still
-composited eight times is far cheaper than eight video renders, and it keeps
-the fade timing with the rest of the edit where it belongs.
+section, drawn live over the footage.
 
-There is no separate list of things to render. `render.mjs` reads the sequence:
-add a motion scene and it renders, remove it and it stops.
+**Direction** — transitions between scenes, and the camera and focus moves
+inside product footage. See [10 Direction](10-direction.md).
+
+`npm run motion` renders single motion scenes to `remotion/out/` for
+previewing; the film itself does not need it.
 
 ### 3. capture — `scripts/capture.mjs`
 
@@ -100,29 +96,23 @@ carets keep blinking, and the shot stays alive.
 ### 4. compose — `scripts/compose.mjs`
 
 ```
-raw/*.webm + remotion/out/* + tts/*.mp3 ──▶ ffmpeg ──▶ out/demo.mp4
+config + durations ──▶ timeline ──┬──▶ Remotion Film ──▶ picture ─┐
+raw/* + tts/*.mp3 ────────────────┴──▶ ffmpeg mix    ──▶ sound   ─┴──▶ out/demo.mp4
 ```
 
-Four passes:
+**timeline** — every scene gets exactly `narration + gap` seconds; transitions,
+titles, focus moves and sound cues are placed on the same clock.
 
-**normalise** — every clip is forced to the exact same width, height, frame
-rate, pixel format and duration. Short clips hold their last frame (`tpad`);
-long clips are trimmed. This uniformity is not cosmetic — it is what lets the
-next step stream-copy.
+**picture** — one Remotion composition renders the whole film, silent.
 
-**title** — for scenes with a `lowerThird`, the PNG is overlaid with an alpha
-fade in and out.
+**sound** — narration, a ducked music bed and effects are placed by absolute
+time and loudness-normalised.
 
-**concat** — the normalised clips are joined with ffmpeg's concat demuxer using
-`-c copy`. No re-encode, because every clip already matches. The audio track is
-built the same way, from narration WAVs interleaved with silence of exactly
-`timing.gap`.
+**master** — picture and sound are muxed, with the poster baked in as frame 0,
+and review stills are written to `out/review/`.
 
-**mux** — the silent cut and the narration track are combined in one final
-encode, with fades at the top and tail.
-
-Then it prints the drift between the two timelines. Under a few milliseconds is
-correct; anything above `0.15s` means a scene is in one list and not the other.
+Then it prints the drift between picture and sound. Under a few hundredths of
+a second is correct. The detail is in [07 Compositing](07-compositing.md).
 
 ## Data flow
 
@@ -140,10 +130,10 @@ correct; anything above `0.15s` means a scene is in one list and not the other.
               ┌──────────────┼──────────────┐
               ▼              ▼              ▼
         ┌──────────┐   ┌──────────┐   ┌──────────┐
-        │  motion  │   │ capture  │   │ compose  │
+        │   clip   │   │ capture  │   │ compose  │
         └────┬─────┘   └────┬─────┘   └────┬─────┘
              │              │              │
-      remotion/out/     raw/*.webm         │
+        raw/*.mp4       raw/*.webm         │
              └──────────────┴──────────────┘
                              ▼
                        out/demo.mp4
@@ -173,13 +163,15 @@ rewrite choreography constantly and touch the recorder almost never.
 | To add | Do this |
 | --- | --- |
 | A recorded scene | entry in `narration.json` → entry in `sequence` → function in `scenes.mjs` |
-| An explainer scene | new composition in `remotion/src/compositions/` → register in `Root.tsx` → `{ from: "motion", composition: "..." }` |
+| An explainer scene | new composition in `remotion/src/compositions/` → add it and its copy to `MOTION` in `scenes.ts` (and `Root.tsx` for the studio) → `{ from: "motion", composition: "..." }` |
 | A title card | add `lowerThird: { kicker, title }` to a sequence entry |
 | A logo sting | drop the file in `assets/`, set `intro: { src: "assets/sting.mp4" }` |
-| Background music | see [07 Compositing](07-compositing.md#adding-a-music-bed) |
+| Background music | `sound.music` — see [10 Direction](10-direction.md#sound) |
+| A zoom onto part of the UI | `focus: [{ at, until, box, label }]` — see [10 Direction](10-direction.md#focus-moves) |
 | A different aspect ratio | change `video` in `design.tokens.json`; everything follows |
 
 ## Next
 
 - **[03 Writing narration](03-writing-narration.md)**
-- **[07 Compositing](07-compositing.md)** — the ffmpeg detail
+- **[07 Compositing](07-compositing.md)** — timeline, picture, sound
+- **[10 Direction](10-direction.md)** — tone, transitions, focus moves

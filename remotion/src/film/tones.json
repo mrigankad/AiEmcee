@@ -1,0 +1,58 @@
+{
+  "$comment": "Tone presets for the film. Read by remotion/src/film (look and motion) and scripts/lib/timeline.mjs (default transitions and sound cues). A tone is a default, not a limit: any scene can override its transition, and video.config.mjs can override any field under `direction`. Adapted from /brag's tone system for long-form narrated demos, where the voice sets the pace and the craft has to stay out of its way.",
+
+  "polished": {
+    "about": "Serious, restrained, elegant. For products that are not jokes. The default.",
+    "transition": { "type": "dip", "duration": 0.5 },
+    "spring": { "damping": 20, "mass": 0.9, "stiffness": 90 },
+    "push": 0.035,
+    "focus": { "zoomMax": 1.7, "dim": 0.42, "ease": 0.75 },
+    "grade": { "contrast": 1.03, "saturate": 1.04, "vignette": 0.14 },
+    "lowerThird": { "hold": 3.6 },
+    "sfx": { "transition": "whoosh", "lowerThird": "rollover", "focus": "select", "outro": "impact" }
+  },
+
+  "default": {
+    "about": "Clean and friendly, a little more motion than polished.",
+    "transition": { "type": "zoom", "duration": 0.45 },
+    "spring": { "damping": 16, "mass": 0.7, "stiffness": 120 },
+    "push": 0.045,
+    "focus": { "zoomMax": 1.8, "dim": 0.36, "ease": 0.6 },
+    "grade": { "contrast": 1.03, "saturate": 1.06, "vignette": 0.1 },
+    "lowerThird": { "hold": 3.4 },
+    "sfx": { "transition": "whoosh", "lowerThird": "rollover", "focus": "select", "outro": "impact" }
+  },
+
+  "cinematic": {
+    "about": "Trailer scale. Brand wipes, heavier grade, bigger camera moves.",
+    "transition": { "type": "wipe", "duration": 0.6 },
+    "spring": { "damping": 22, "mass": 1.1, "stiffness": 80 },
+    "push": 0.06,
+    "focus": { "zoomMax": 2.0, "dim": 0.55, "ease": 0.9 },
+    "grade": { "contrast": 1.07, "saturate": 1.02, "vignette": 0.3 },
+    "lowerThird": { "hold": 3.8 },
+    "sfx": { "transition": "whoosh", "lowerThird": "rollover", "focus": "impact", "outro": "impact" }
+  },
+
+  "app-store": {
+    "about": "Smooth horizontal pushes, feature-card clean.",
+    "transition": { "type": "push", "duration": 0.45 },
+    "spring": { "damping": 18, "mass": 0.7, "stiffness": 130 },
+    "push": 0.03,
+    "focus": { "zoomMax": 1.7, "dim": 0.3, "ease": 0.55 },
+    "grade": { "contrast": 1.02, "saturate": 1.08, "vignette": 0.06 },
+    "lowerThird": { "hold": 3.4 },
+    "sfx": { "transition": "whoosh", "lowerThird": "click", "focus": "select", "outro": "impact" }
+  },
+
+  "deadpan": {
+    "about": "Dry and still. Hard cuts, no zooms that call attention to themselves, almost no sound design.",
+    "transition": { "type": "cut", "duration": 0 },
+    "spring": { "damping": 26, "mass": 1, "stiffness": 100 },
+    "push": 0,
+    "focus": { "zoomMax": 1.4, "dim": 0.3, "ease": 0.9 },
+    "grade": { "contrast": 1, "saturate": 1, "vignette": 0 },
+    "lowerThird": { "hold": 3.6 },
+    "sfx": { "transition": null, "lowerThird": null, "focus": null, "outro": null }
+  }
+}

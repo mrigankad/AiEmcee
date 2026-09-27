@@ -1,187 +1,140 @@
 /**
- * Assembles the finished film from captures, Remotion clips and narration.
+ * Assembles the finished film.
  *
- * The rule that makes this work: every scene is cut to exactly
- * `narration + gap` seconds, and the audio track is built from the same
- * numbers in the same order. Two timelines built from one source of truth
- * cannot drift, so no per-scene sync fixing is ever needed.
+ * The rule that makes this work is unchanged: every scene owns exactly
+ * `narration + gap` seconds, and both the picture and the sound are built from
+ * those same numbers. What changed is where the picture is made. Instead of
+ * cutting clips with ffmpeg and stream-joining them, the whole film is one
+ * Remotion composition, so scenes can transition into each other, titles can
+ * animate, and the camera can move inside product footage.
  *
- * Pipeline per scene:
- *   normalise  scale + fps + pad/trim to the exact target length
- *   title      optional lower third composited over the top
- *   concat     stream-copy join, which is why every clip must match exactly
- *   mux        narration laid over the silent cut, with fades top and tail
+ *   timeline   config + durations.json -> work/timeline.json (the one clock)
+ *   stage      footage + timeline into remotion/public/film/
+ *   picture    Remotion renders the Film, silent -> work/film.mp4
+ *   sound      narration + ducked music bed + effects, loudness-normalised
+ *   master     mux, poster baked in as frame 0 -> out/<name>.mp4 + .jpg
+ *   review     stills of every scene, transition, title and focus move
+ *
+ *   npm run compose                  everything
+ *   npm run compose -- --sound-only  reuse work/film.mp4; remix and remaster
  */
 import fs from "node:fs";
 import path from "node:path";
 
-import { at, ensureDir, loadConfig, loadDurations, posix, resetDir } from "./lib/config.mjs";
-import { ff, probe, silence, toWav } from "./lib/ffmpeg.mjs";
+import { at, ensureDir, loadConfig, loadDurations, resetDir } from "./lib/config.mjs";
+import { ff, probe } from "./lib/ffmpeg.mjs";
+import { ENTRY, REMOTION_DIR, rel, remotion } from "./lib/remotion.mjs";
+import { posterTime, writeReview } from "./lib/review.mjs";
+import { mixSoundtrack } from "./lib/sound.mjs";
+import { buildTimeline } from "./lib/timeline.mjs";
 
-const { config } = await loadConfig();
+const soundOnly = process.argv.includes("--sound-only");
+
+const { config, narrationById } = await loadConfig();
 const durations = loadDurations(config);
 
-const { width: W, height: H, fps: FPS } = config.video;
-const { gap, endHold, introTail, fadeIn, fadeOut } = config.timing;
-
-const workDir = resetDir(at(config.paths.work));
+// A full compose rebuilds everything in work/; --sound-only keeps the picture.
+const workDir = soundOnly ? ensureDir(at(config.paths.work)) : resetDir(at(config.paths.work));
+const soundDir = resetDir(path.join(workDir, "sound"));
 const outFile = at(config.output);
 ensureDir(path.dirname(outFile));
 
+const film = path.join(workDir, "film.mp4");
 const pixfmt = ["-pix_fmt", "yuv420p", "-movflags", "+faststart"];
-const INTERMEDIATE = [...config.encode.intermediate, ...pixfmt];
-
-/**
- * Force a clip to exactly `target` seconds at the pipeline's frame size and
- * rate. Short clips hold their last frame (tpad); long clips are trimmed.
- * Uniformity here is what lets the concat step stream-copy instead of
- * re-encoding every scene a second time.
- */
-function normalise(src, dst, target, label) {
-  const have = probe(src);
-  const pad =
-    have < target
-      ? `,tpad=stop_mode=clone:stop_duration=${(target - have + 0.5).toFixed(2)}`
-      : "";
-
-  ff([
-    "-i", src,
-    "-vf", `scale=${W}:${H}:flags=lanczos,fps=${FPS},format=yuv420p${pad}`,
-    "-t", target.toFixed(3),
-    "-an",
-    ...INTERMEDIATE,
-    "-y", dst,
-  ]);
-
-  console.log(`${label.padEnd(18)} ${have.toFixed(1)}s -> ${target.toFixed(1)}s`);
-  return dst;
-}
-
-/** Composite a transparent lower-third PNG over a clip, fading it in and out. */
-function overlayTitle(src, png, dst) {
-  const hold = 2.5;
-  ff([
-    "-i", src,
-    "-loop", "1", "-t", String(hold), "-i", png,
-    "-filter_complex",
-    "[1:v]format=rgba," +
-      "fade=t=in:st=0.35:d=0.25:alpha=1," +
-      `fade=t=out:st=${(hold - 0.35).toFixed(2)}:d=0.3:alpha=1[lt];` +
-      "[0:v][lt]overlay=0:0:format=auto:eof_action=pass",
-    "-t", probe(src).toFixed(3),
-    ...INTERMEDIATE,
-    "-y", dst,
-  ]);
-  return dst;
-}
-
-/** Where a sequence entry's source clip lives on disk. */
-function sourceFor(entry) {
-  if (entry.from === "motion") {
-    if (!entry.composition) throw new Error(`${entry.id}: motion scene needs a "composition"`);
-    return at(config.paths.motion, `${entry.composition.toLowerCase()}.mp4`);
-  }
-  return at(config.paths.raw, `${entry.id}.webm`);
-}
-
-const videoParts = [];
-const audioParts = [];
 
 /* ---------------------------------------------------------------- */
-/* Intro sting — keeps its own audio, then a beat of silence          */
+/* Timeline                                                          */
 /* ---------------------------------------------------------------- */
-if (config.intro) {
-  const src = at(config.intro.src);
-  if (!fs.existsSync(src)) throw new Error(`intro asset missing: ${config.intro.src}`);
+const { timeline, media } = buildTimeline(config, durations, narrationById);
+fs.writeFileSync(path.join(workDir, "timeline.json"), JSON.stringify(timeline, null, 2));
 
-  const have = probe(src);
-  videoParts.push(normalise(src, path.join(workDir, "00-intro.mp4"), have + introTail, "00-intro"));
-  audioParts.push(toWav(src, path.join(workDir, "00-intro.wav"), have));
-  audioParts.push(silence(introTail, path.join(workDir, "00-intro-gap.wav")));
+console.log(`tone     ${timeline.tone.name} — ${timeline.tone.about}`);
+for (const seg of timeline.segments) {
+  const tr = seg.lead > 0 ? `${seg.transition.type} ${seg.lead.toFixed(2)}s` : "cut";
+  const extras = [
+    seg.lowerThird ? `title "${seg.lowerThird.kicker}"` : null,
+    seg.focus.length ? `${seg.focus.length} focus` : null,
+  ].filter(Boolean);
+  console.log(
+    `  ${seg.id.padEnd(17)} ${seg.start.toFixed(2).padStart(7)}s  +${seg.slot.toFixed(2)}s  ` +
+      `${tr.padEnd(12)} ${extras.join(", ")}`,
+  );
 }
 
 /* ---------------------------------------------------------------- */
-/* Scenes                                                            */
+/* Picture                                                           */
 /* ---------------------------------------------------------------- */
-for (const entry of config.sequence) {
-  const src = sourceFor(entry);
-  if (!fs.existsSync(src)) {
-    const how = entry.from === "motion" ? "npm run motion" : "npm run capture";
-    throw new Error(`missing clip for ${entry.id}: ${path.relative(at(), src)}\n  run \`${how}\``);
-  }
-
-  const target = durations[entry.id] + gap;
-  let dst = normalise(src, path.join(workDir, `${entry.id}.mp4`), target, entry.id);
-
-  if (entry.lowerThird) {
-    const png = at(config.paths.motion, `lt-${entry.id}.png`);
-    if (!fs.existsSync(png)) {
-      throw new Error(`lower third not rendered for ${entry.id} — run \`npm run motion\``);
+if (!soundOnly) {
+  const stageDir = resetDir(path.join(REMOTION_DIR, "public", "film"));
+  ensureDir(path.join(stageDir, "media"));
+  for (const { from, to } of media) {
+    const dest = path.join(REMOTION_DIR, "public", to);
+    try {
+      fs.linkSync(from, dest); // same volume: instant, no copy
+    } catch {
+      fs.copyFileSync(from, dest);
     }
-    const titled = overlayTitle(dst, png, path.join(workDir, `${entry.id}-titled.mp4`));
-    fs.renameSync(titled, dst);
-    console.log(`${"".padEnd(18)} + lower third "${entry.lowerThird.kicker}"`);
   }
+  fs.writeFileSync(path.join(stageDir, "timeline.json"), JSON.stringify(timeline));
 
-  videoParts.push(dst);
-  audioParts.push(toWav(at(config.paths.tts, `${entry.id}.mp3`), path.join(workDir, `${entry.id}.wav`)));
-  audioParts.push(silence(gap, path.join(workDir, `${entry.id}-gap.wav`)));
+  console.log(`\npicture  rendering ${timeline.total.toFixed(2)}s at ${timeline.fps}fps -> work/film.mp4`);
+  const started = Date.now();
+  remotion(["render", ENTRY, "Film", rel(film), "--codec=h264", "--crf=16", "--muted"]);
+  console.log(`picture  done in ${((Date.now() - started) / 1000).toFixed(0)}s`);
+} else if (!fs.existsSync(film)) {
+  throw new Error("--sound-only needs a previous render at work/film.mp4");
 }
 
 /* ---------------------------------------------------------------- */
-/* End card — silent by design, so the last line can land            */
+/* Sound                                                             */
 /* ---------------------------------------------------------------- */
-if (config.outro) {
-  const src = at(config.paths.motion, `${config.outro.composition.toLowerCase()}.mp4`);
-  if (!fs.existsSync(src)) throw new Error(`end card not rendered — run \`npm run motion\``);
-
-  videoParts.push(normalise(src, path.join(workDir, "zz-endcard.mp4"), endHold, "zz-endcard"));
-  audioParts.push(silence(endHold, path.join(workDir, "zz-endcard.wav")));
-}
+const mix = mixSoundtrack({ config, timeline, workDir: soundDir, dest: path.join(soundDir, "mix.wav") });
+console.log(
+  `\nsound    ${timeline.audio.narration.length} lines, ${mix.effects} effects` +
+    `${mix.music ? ", music bed (ducked)" : ""}  ->  ${mix.loudness.toFixed(1)} LUFS`,
+);
 
 /* ---------------------------------------------------------------- */
-/* Join, then mux                                                    */
+/* Master, with the poster baked in as frame 0                       */
 /* ---------------------------------------------------------------- */
-const writeList = (files, dest) => {
-  fs.writeFileSync(dest, files.map((f) => `file '${posix(f)}'`).join("\n"));
-  return dest;
-};
+const posterFile = outFile.replace(/\.mp4$/i, ".jpg");
+const posterAt = posterTime(config, timeline);
+ff(["-ss", posterAt.toFixed(3), "-i", film, "-frames:v", "1", "-q:v", "2", "-y", posterFile]);
 
-const narrationWav = path.join(workDir, "narration.wav");
+// Replace frame 0 rather than adding one, so duration and sync are untouched.
+// Every platform's idle thumbnail is then the strongest settled frame, not a
+// black fade-in.
+const bake = config.poster?.bake !== false;
 ff([
-  "-f", "concat", "-safe", "0",
-  "-i", writeList(audioParts, path.join(workDir, "audio.txt")),
-  "-c", "copy", "-y", narrationWav,
-]);
-
-const silentCut = path.join(workDir, "silent.mp4");
-ff([
-  "-f", "concat", "-safe", "0",
-  "-i", writeList(videoParts, path.join(workDir, "video.txt")),
-  "-c", "copy", "-y", silentCut,
-]);
-
-const total = probe(silentCut);
-
-ff([
-  "-i", silentCut,
-  "-i", narrationWav,
-  "-vf", `fade=t=in:st=0:d=${fadeIn},fade=t=out:st=${(total - fadeOut).toFixed(2)}:d=${fadeOut}`,
-  "-af", `afade=t=in:st=0:d=0.4,afade=t=out:st=${(total - 1.0).toFixed(2)}:d=1.0`,
+  "-i", film,
+  "-i", mix.file,
+  ...(bake ? ["-i", posterFile] : []),
+  ...(bake
+    ? ["-filter_complex", "[0:v][2:v]overlay=enable='eq(n,0)'[v]", "-map", "[v]"]
+    : ["-map", "0:v"]),
+  "-map", "1:a",
   ...config.encode.final,
   ...pixfmt,
   ...config.encode.audio,
-  // Guards against a rounding-level mismatch between the two timelines
-  // becoming a frame of black or a tail of silence.
   "-shortest",
   "-y", outFile,
 ]);
 
-const drift = Math.abs(probe(narrationWav) - total);
+/* ---------------------------------------------------------------- */
+/* Review                                                            */
+/* ---------------------------------------------------------------- */
+const reviewDir = at(path.dirname(config.output), "review");
+const review = writeReview({ film, timeline, outDir: reviewDir });
+
+const picture = probe(film);
+const drift = Math.abs(picture - mix.duration);
 
 console.log(
-  `\nvideo   ${total.toFixed(2)}s` +
-    `\naudio   ${probe(narrationWav).toFixed(2)}s` +
-    `\ndrift   ${drift.toFixed(3)}s${drift > 0.15 ? "   <- check for a missing scene" : ""}` +
-    `\nfinal   ${probe(outFile).toFixed(2)}s  ->  ${config.output}`,
+  `\nvideo    ${picture.toFixed(2)}s` +
+    `\naudio    ${mix.duration.toFixed(2)}s` +
+    `\ndrift    ${drift.toFixed(3)}s${drift > 0.1 ? "   <- check the timeline" : ""}` +
+    `\nfinal    ${probe(outFile).toFixed(2)}s  ->  ${config.output}` +
+    `\nposter   ${posterAt.toFixed(2)}s  ->  ${path.relative(at(), posterFile).split(path.sep).join("/")}` +
+    `${bake ? " (baked as frame 0)" : ""}` +
+    `\nreview   ${review.count} stills  ->  ${path.relative(at(), review.sheet).split(path.sep).join("/")}`,
 );

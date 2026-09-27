@@ -12,7 +12,7 @@ Most of the time this is all you need. The compositions are prop-driven.
 ```
 Read docs/05-motion-graphics.md.
 
-Rewrite the defaultProps for Problem and Pipeline in remotion/src/Root.tsx
+Rewrite the props for Problem and Pipeline in remotion/src/scenes.ts
 using scenes 02-problem and 03b-pipeline from narration.json.
 
 Problem takes three beats. Each beat needs:
@@ -61,9 +61,9 @@ CONSTRAINTS
   - Type sizes from the scale in docs/06-styling.md. Nothing below 14px.
   - Deterministic: no Date.now(), no Math.random(), no CSS transitions.
     Every frame must be a pure function of useCurrentFrame().
-  - Props typed and exported, so Root.tsx can use `satisfies`.
+  - Props typed and exported, so scenes.ts can use `satisfies`.
 
-Then register it in Root.tsx with sensible defaultProps, add it to the
+Then add it with sensible props to MOTION in scenes.ts (and Root.tsx for the studio), add it to the
 sequence in video.config.mjs as a motion scene, and run
 `npm run motion -- <NAME>`.
 ```
@@ -73,7 +73,7 @@ sequence in video.config.mjs as a motion scene, and run
 ## The end card
 
 ```
-Update the EndCard defaultProps in Root.tsx:
+Update endCardProps in remotion/src/scenes.ts:
 
   mark:    "<file>.svg"   (I have put it in remotion/public/)
   title:   "<Product>"

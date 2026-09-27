@@ -13,12 +13,28 @@ import { at, loadConfig } from "./lib/config.mjs";
 const require = createRequire(import.meta.url);
 const rows = [];
 
+/* Loaded up front so a check can be skipped when the film does not need it.
+   Deliberately tolerant: a broken config is reported by its own row below,
+   not by every tool check turning into a crash. */
+let project = null;
+try {
+  project = await loadConfig();
+} catch {
+  /* reported by the "project config" row */
+}
+const needsBrowser = project?.config.sequence.some((s) => s.from === "capture") ?? true;
+
 function check(label, fn, fix) {
   try {
     rows.push({ ok: true, label, detail: fn() ?? "" });
   } catch (err) {
     rows.push({ ok: false, label, detail: err.message.split("\n")[0], fix });
   }
+}
+
+/** Not installed, but not needed either. Reported, never counted as a problem. */
+function skip(label, why) {
+  rows.push({ ok: true, skipped: true, label, detail: why });
 }
 
 const run = (cmd, args) =>
@@ -52,9 +68,12 @@ check(
   "pip install edge-tts   (then reopen your terminal so PATH updates)",
 );
 
-check(
-  "playwright chromium",
-  () => {
+if (!needsBrowser) {
+  skip("playwright chromium", "not needed — no captured scenes");
+} else {
+  check(
+    "playwright chromium",
+    () => {
     // Importing playwright is not enough — the browser binary is a separate
     // download, and its absence only shows up when capture.mjs already ran.
     const { chromium } = require("playwright");
@@ -62,8 +81,9 @@ check(
     if (!fs.existsSync(exe)) throw new Error("browser binary not downloaded");
     return "installed";
   },
-  "npm install && npx playwright install chromium",
-);
+    "npm install && npx playwright install chromium",
+  );
+}
 
 check(
   "remotion dependencies",
@@ -77,15 +97,16 @@ check(
 );
 
 try {
-  const { config, narration } = await loadConfig();
+  const { config, narration } = project ?? (await loadConfig());
   const captured = config.sequence.filter((s) => s.from === "capture").length;
+  const clips = config.sequence.filter((s) => s.from === "clip").length;
   const motion = config.sequence.filter((s) => s.from === "motion").length;
   const titles = config.sequence.filter((s) => s.lowerThird).length;
   rows.push({
     ok: true,
     label: "project config",
     detail:
-      `${narration.length} narration lines, ${captured} captured + ${motion} motion scenes` +
+      `${narration.length} narration lines, ${captured} captured + ${clips} clip + ${motion} motion scenes` +
       (titles ? `, ${titles} lower third(s)` : ""),
   });
 } catch (err) {

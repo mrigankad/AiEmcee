@@ -22,10 +22,10 @@ testing is expensive. Say it in a designed frame and move on.
 | `Problem` | three claims revealing one at a time, along a trace line |
 | `Pipeline` | numbered steps lighting up a rail, with a payoff strip |
 | `EndCard` | mark, name, positioning line, call to action |
-| `LowerThird` | rendered as a transparent still, composited over footage |
+| `LowerThird` | animated title card, drawn over footage inside the film |
 
 All four are prop-driven. Rewriting the copy usually means editing
-`defaultProps` in `Root.tsx` — no component changes at all.
+its copy in `remotion/src/scenes.ts` — no component changes at all.
 
 ## Frames, not seconds
 
@@ -38,10 +38,11 @@ import { sec } from "./theme";
 durationInFrames={sec(11.4)}   // 11.4 seconds
 ```
 
-**A composition must be at least as long as its narration line.** If it is
-shorter, `compose` freeze-frames the tail, which is visible and looks broken.
-`npm run narrate` prints every length; copy the number for each motion scene
-into `Root.tsx` and add a little headroom.
+**Inside the film, a motion scene always runs exactly its narration slot**
+(`narration + gap`); `useVideoConfig().durationInFrames` reports that length.
+The durations in `Root.tsx` are only for previewing in the studio. What you
+do still re-time by hand is the `at` frames inside a scene, when its line
+changes.
 
 ## The motion vocabulary
 
@@ -191,7 +192,19 @@ export function Metrics({ eyebrow, stats }: MetricsProps) {
 }
 ```
 
-**2. Register it** in `Root.tsx`:
+**2. Register it.** Put its copy and a registry entry in `scenes.ts`, which is
+where the film looks it up:
+
+```ts
+export const metricsProps = { eyebrow: "By the numbers", stats: [/* … */] } satisfies MetricsProps;
+
+export const MOTION = {
+  // …
+  Metrics: { component: Metrics, props: metricsProps },
+};
+```
+
+Then, to preview it in the studio, register it in `Root.tsx`:
 
 ```tsx
 <Composition
@@ -216,15 +229,15 @@ export function Metrics({ eyebrow, stats }: MetricsProps) {
 { id: "11-metrics", from: "motion", composition: "Metrics" },
 ```
 
-Plus a matching `narration.json` entry. `render.mjs` reads the sequence, so
-there is no fourth place to register it.
+Plus a matching `narration.json` entry.
 
-**4. Render:** `npm run motion -- Metrics`
+**4. Preview** with `npm run studio` or `npm run motion -- Metrics`; the film
+picks it up on the next `npm run compose`.
 
 ## Lower thirds
 
-Not video. A single transparent PNG per titled scene, faded in and out by
-ffmpeg in `compose.mjs`.
+Drawn live over the footage inside the film: the brand bar grows, the card
+unrolls, the words rise in, and it fades out after the tone's hold time.
 
 Add one by adding it to a sequence entry:
 
@@ -239,9 +252,8 @@ Add one by adding it to a sequence entry:
 `kicker` is 1–2 words in brand orange. `title` is a short phrase. Keep the
 title under about 40 characters — it is a caption, not a sentence.
 
-`render.mjs` writes `remotion/out/lt-04-feature.png` at frame 24, past the
-fade-in so the still is at full opacity. The actual fade is applied by ffmpeg,
-because that is where the rest of the edit's timing lives.
+It arrives `timing.lowerThirdIn` (0.32s) after the scene's narration starts.
+Keep focus moves clear of it (see [10 Direction](10-direction.md)).
 
 ## Gotchas
 

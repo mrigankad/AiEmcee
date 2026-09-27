@@ -179,7 +179,8 @@ specific reason. The final encode is what determines quality.
 ### `Composition with id "X" not found`
 
 Registered in `Root.tsx`? The `id` prop must match `composition` in the
-sequence exactly, including case.
+sequence exactly, including case. For the film, the composition must also be
+in `MOTION` in `remotion/src/scenes.ts`; `npm run validate` checks this.
 
 ### Fonts render as fallbacks
 
@@ -195,16 +196,8 @@ Something in the composition is non-deterministic. `Date.now()`,
 
 ### The lower third has a black background
 
-The composition must use `<Page transparent>`, and the still must be rendered
-with `--image-format=png`. Both are already set; if you copied `LowerThird`
-into a new composition, check you kept them.
-
-Verify:
-
-```bash
-ffprobe -v error -show_entries stream=pix_fmt -of csv=p=0 remotion/out/lt-04-feature.png
-# rgba
-```
+The composition must use `<Page transparent>`. It is already set; if you
+copied `LowerThird` into a new composition, check you kept it.
 
 ### An element is in the wrong place after adding padding
 
@@ -224,9 +217,16 @@ and render only at the end. Render one composition at a time with
 The error names the command to run. Usually `npm run capture` for a scene you
 added to the sequence but never recorded.
 
-### `lower third not rendered for <id>`
+### `missing footage for <id>`
 
-You added `lowerThird` to a sequence entry. Run `npm run motion`.
+The error names the command to run: `npm run clip` or `npm run capture`.
+
+### A focus move missed its target
+
+Read the still in `out/review/` for that move. `at` / `until` are seconds into
+the footage file, not the film, and `box` is fractions of the frame. Re-grid
+the clip (see [10 Direction](10-direction.md#focus-moves)) and read the box
+off again.
 
 ### `drift 0.4s   <- check for a missing scene`
 

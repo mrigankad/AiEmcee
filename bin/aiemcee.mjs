@@ -28,11 +28,18 @@ tts/
 work/
 out/
 remotion/out/
+remotion/public/film/
 
 # Large source media you drop in yourself (logo stings, music beds).
 # Delete these two lines if your intro asset is small enough to track.
 assets/*.mp4
 assets/*.mov
+assets/*.mp3
+assets/*.wav
+assets/music/
+
+# Personal Claude Code settings. The shared /emcee skill in .claude/skills/ is tracked.
+.claude/settings.local.json
 
 # Logs and OS noise
 *.log
@@ -55,10 +62,14 @@ const SCAFFOLD = [
   "docs",
   "examples",
   "assets",
+  ".claude/skills",
 ];
 
 /** Never copied, even when present inside a scaffolded directory. */
 const SKIP = new Set(["node_modules", "out", "raw", "work", "tts", ".git"]);
+
+/** Never copied, by path from the package root: staged render media. */
+const SKIP_PATHS = new Set([path.join("remotion", "public", "film")]);
 
 function projectPackageJson(name) {
   return `${JSON.stringify(
@@ -73,9 +84,11 @@ function projectPackageJson(name) {
         doctor: "node scripts/doctor.mjs",
         narrate: "node scripts/narrate.mjs",
         motion: "node remotion/render.mjs",
+        validate: "node scripts/validate.mjs",
         capture: "node scripts/capture.mjs",
+        clip: "node scripts/clip.mjs",
         compose: "node scripts/compose.mjs",
-        build: "npm run narrate && npm run motion && npm run capture && npm run compose",
+        build: "npm run narrate && npm run clip && npm run capture && npm run compose",
         studio: "npm --prefix remotion run studio",
         setup: "npm install && npm --prefix remotion install && npx playwright install chromium",
       },
@@ -93,6 +106,7 @@ function copy(src, dest) {
     fs.mkdirSync(dest, { recursive: true });
     for (const entry of fs.readdirSync(src)) {
       if (SKIP.has(entry)) continue;
+      if (SKIP_PATHS.has(path.relative(PKG_ROOT, path.join(src, entry)))) continue;
       copy(path.join(src, entry), path.join(dest, entry));
     }
     return;

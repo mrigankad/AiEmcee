@@ -7,7 +7,7 @@
 import React from "react";
 import { interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 
-import { Page } from "../components/Motion";
+import { KineticLine, Page } from "../components/Motion";
 import { fontDisplay, fontSans } from "../fonts";
 import { theme } from "../theme";
 
@@ -46,9 +46,9 @@ export function EndCard({ mark, title, kicker, tagline }: EndCardProps) {
           <img
             src={staticFile(mark)}
             alt=""
-            width={72}
-            height={72}
-            style={{ borderRadius: 16 }}
+            width={88}
+            height={88}
+            style={{ borderRadius: 20, boxShadow: "0 16px 40px rgba(16,16,16,0.12)" }}
           />
         ) : null}
 
@@ -77,7 +77,9 @@ export function EndCard({ mark, title, kicker, tagline }: EndCardProps) {
           {kicker}
         </div>
 
-        <div style={{ marginTop: 36, fontSize: 20, color: theme.secondary }}>{tagline}</div>
+        <div style={{ marginTop: 36, fontSize: 20, color: theme.secondary }}>
+          <KineticLine text={tagline} delay={14} stagger={2} />
+        </div>
       </div>
     </Page>
   );

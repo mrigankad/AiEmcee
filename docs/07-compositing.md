@@ -1,216 +1,99 @@
 # 07 · Compositing
 
-What `scripts/compose.mjs` does with ffmpeg, and how to change it.
+What `npm run compose` (`scripts/compose.mjs`) does, and where to change it.
 
-## The four passes
-
-```
-normalise  ──▶  title  ──▶  concat  ──▶  mux
-```
-
-Each has one job, and the order matters.
-
-### 1. normalise
-
-Every clip is forced to identical width, height, frame rate, pixel format and
-duration.
+## The six steps
 
 ```
--vf scale=1600:900:flags=lanczos,fps=30,format=yuv420p[,tpad=...]
--t  <narration + gap>
--an
+timeline ──▶ stage ──▶ picture ──▶ sound ──▶ master ──▶ review
 ```
 
-| Part | Why |
+### 1. timeline — `scripts/lib/timeline.mjs`
+
+Turns `video.config.mjs` + `tts/durations.json` into `work/timeline.json`,
+the one clock everything else is cut to.
+
+- Every scene owns exactly `durations[id] + timing.gap` seconds. This is the
+  metronome rule, unchanged.
+- The intro sting owns its own length + `timing.introTail`; the end card owns
+  `timing.endHold`.
+- Each scene's transition (from the tone, or the scene's own `transition`)
+  becomes a `lead`: the scene is on screen that many seconds *before* its slot,
+  under the tail of the previous one, in the silent gap.
+- Lower thirds, focus moves and sound cues are placed on the same clock.
+
+### 2. stage
+
+Footage (`raw/*`, intro, outro) is hard-linked into `remotion/public/film/media/`
+and the timeline is written to `remotion/public/film/timeline.json`, where the
+Remotion bundle can read them. The directory is regenerated on every compose
+and is git-ignored.
+
+### 3. picture — `remotion/src/film/`
+
+One composition, `Film`, renders the whole video silent to `work/film.mp4`
+(H.264, CRF 16, a high-quality intermediate).
+
+| File | Does |
 | --- | --- |
-| `scale=…:flags=lanczos` | highest-quality resampler — matters for UI text |
-| `fps=30` | Playwright's webm frame rate wanders; this pins it |
-| `format=yuv420p` | the only pixel format every player handles |
-| `tpad=stop_mode=clone` | short clips hold their last frame |
-| `-t` | the hard cut to the exact target |
-| `-an` | drop audio; the narration track is built separately |
+| `Film.tsx` | lays every segment, title and wipe edge on the timeline; top/tail fade |
+| `transitions.tsx` | `cut`, `fade`, `dip`, `zoom`, `push`, `wipe`, as pure functions of progress |
+| `Footage.tsx` | product footage: slow push, focus moves (zoom, dim, ring, label), grade, vignette; holds the last frame if a file runs short |
+| `tone.tsx`, `tones.json` | the tone presets, provided to every primitive |
 
-The target is always `durations[id] + timing.gap`. That single line is what
-keeps picture and sound locked together.
+Motion scenes render inline at exactly their slot length (a `<Sequence>`
+reports its own duration to `useVideoConfig`). Under the incoming transition
+they hold frame 0, so hand-timed beats still land on their words.
 
-This uniformity is not cosmetic. It is what makes the next-but-one step able to
-stream-copy instead of re-encoding everything twice.
+Scrub the whole film with `npm run studio` → `Film` after one compose.
 
-### 2. title
+### 4. sound — `scripts/lib/sound.mjs`
 
-Scenes with a `lowerThird` get the PNG composited on top:
+Everything is placed by absolute time with `adelay`, from the timeline:
 
 ```
-[1:v]format=rgba,
-     fade=t=in:st=0.35:d=0.25:alpha=1,
-     fade=t=out:st=2.15:d=0.3:alpha=1[lt];
-[0:v][lt]overlay=0:0:format=auto:eof_action=pass
+intro audio + narration lines ──┬──────────────────────────────┐
+                                └─(sidechain key)─┐            │
+music bed ── normalise ── volume ── fades ── sidechaincompress ─┤── amix ── loudnorm (2-pass) ──▶ mix.wav
+effects (whoosh, title, focus, outro) ── volume ───────────────┘
 ```
 
-The still is looped for 2.5 seconds, faded in at 0.35s and out at 2.15s, and
-overlaid at the origin — the card positions itself inside its own transparent
-1600×900 frame, so the overlay never needs coordinates.
+- The bed is ducked by the narration (fast attack, 650ms release), so it sits
+  under the voice and breathes up in the gaps.
+- The whoosh is synthesised per transition length; other effects come from
+  `assets/sfx/`.
+- The master is normalised to -16 LUFS integrated, -1.5 dBTP.
 
-`eof_action=pass` lets the base video continue after the 2.5-second overlay
-ends. Without it, the scene would be truncated to the length of the title card.
+### 5. master
 
-### 3. concat
+`work/film.mp4` + `mix.wav` → `out/<name>.mp4` with the final encode settings
+from `config.encode`. The poster (`out/<name>.jpg`) is grabbed from the film
+and overlaid on frame 0 only (`overlay=enable='eq(n,0)'`), replacing that
+frame, so duration and sync are unchanged.
 
-```
-ffmpeg -f concat -safe 0 -i video.txt -c copy silent.mp4
-```
+### 6. review — `scripts/lib/review.mjs`
 
-The concat **demuxer**, not the filter. `-c copy` means no re-encode: the clips
-are already identical, so their packets are just appended. It takes a second
-instead of a minute, and costs no generation loss.
+Stills of every scene (settled), transition (mid-way), title and focus move,
+in `out/review/`, with `index.json` and a labelled `contact-sheet.jpg`.
 
-This only works because normalise did its job. Any mismatch in resolution,
-frame rate, pixel format or codec parameters, and the output is corrupt or the
-join fails.
-
-The audio track is built the same way, from narration WAVs interleaved with
-silence of exactly `timing.gap`, in the same order — which is what guarantees
-the two timelines match.
-
-Concat lists need forward slashes even on Windows, which is what
-`posix()` in `scripts/lib/config.mjs` is for.
-
-### 4. mux
-
-One final encode combining the silent cut and the narration:
+## Sync
 
 ```
--vf fade=t=in:st=0:d=0.5,fade=t=out:st=<end-0.8>:d=0.8
--af afade=t=in:st=0:d=0.4,afade=t=out:st=<end-1.0>:d=1.0
--c:v libx264 -preset slow -crf 19 -pix_fmt yuv420p
--c:a aac -b:a 192k
--movflags +faststart
--shortest
+video    125.93s
+audio    125.92s
+drift    0.013s
 ```
 
-| Flag | Why |
-| --- | --- |
-| `-preset slow -crf 19` | the only quality-critical encode; worth the time |
-| `-movflags +faststart` | moves the index to the front so it streams |
-| `-shortest` | guards against a rounding-level mismatch becoming a frame of black |
+Printed on every build. Picture length is `round(total × fps)` frames; audio
+is trimmed to `total`. Anything over 0.1s means the timeline and a render
+disagree, which should not happen; re-run a full compose.
 
-The audio fades out slightly ahead of the video, so the picture is still there
-when the sound goes.
+## Iterating
 
-## Reading the output
-
-```
-01-hook            11.0s -> 11.1s
-02-problem         11.5s -> 11.0s
-04-feature         14.0s -> 12.7s
-                   + lower third "Discovery"
-
-video   68.83s
-audio   68.83s
-drift   0.005s
-final   68.83s  ->  out/demo.mp4
+```bash
+npm run compose -- --sound-only   # re-mix and re-master against the last picture
 ```
 
-`x -> y` is source duration to target. Padding by more than about two seconds
-means the choreography is finishing early. Trimming by more than about two
-means it is overrunning — the tail is being cut.
-
-**`drift` is the health check.** Under a few milliseconds is correct. Above
-`0.15s` means a scene is in one timeline and not the other, and `compose`
-flags it.
-
-## The timing knobs
-
-In `video.config.mjs`:
-
-```js
-timing: {
-  gap: 0.45,        // silence after each line — the breathing room
-  tailPad: 0.9,     // extra seconds a clip must outlast its narration
-  minPad: 0.6,      // floor on the end-of-scene hold
-  introTail: 0.35,  // beat after the logo sting
-  endHold: 3.2,     // how long the end card holds
-  fadeIn: 0.5,
-  fadeOut: 0.8,
-}
-```
-
-**`gap`** is the one worth tuning. 0.45s is a comfortable default. Below 0.3 the
-video feels breathless; above 0.7 it drags. It applies uniformly, so changing
-it changes the pace of the whole film.
-
-**`endHold`** should be long enough to read the end card and no longer. 3–4
-seconds.
-
-## Recipes
-
-### Adding a music bed
-
-Add a third input to the mux and mix it under the narration:
-
-```js
-ff([
-  "-i", silentCut,
-  "-i", narrationWav,
-  "-i", at("assets/music.mp3"),
-  "-filter_complex",
-    // narration to the front, music at 12% under it, ducking on overlap
-    "[2:a]volume=0.12,afade=t=out:st=" + (total - 3).toFixed(2) + ":d=3[bed];" +
-    "[1:a][bed]amix=inputs=2:duration=first:dropout_transition=0[a]",
-  "-map", "0:v", "-map", "[a]",
-  ...
-]);
-```
-
-Keep it at 10–15%. Louder and it fights the voice. Choose something without a
-strong melody — a bed, not a song.
-
-### Cross-dissolves between scenes
-
-The concat demuxer produces hard cuts, which is correct for a product demo:
-hard cuts read as decisive, dissolves read as a slideshow.
-
-If you need one, `xfade` is the filter — but it requires re-encoding the join,
-so build it as a separate pass rather than changing the concat step.
-
-### A different output format
-
-```js
-encode: {
-  final: ["-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0"],  // WebM
-}
-```
-
-Change `output` to match the container: `out/demo.webm`.
-
-### Smaller files
-
-Raise `crf`. 19 is high quality; 23 is noticeably smaller and still fine for
-Slack. Above 28, UI text starts to smear — which is the one thing a product
-demo cannot afford.
-
-### A per-scene trim
-
-There is no per-scene trim, by design: scene length is narration length. To
-make a scene shorter, cut words from the line.
-
-## Why it looks like this
-
-**Why not one big filter_complex?** It would re-encode everything once, be
-impossible to debug, and give you no way to inspect an intermediate. Passes
-writing to `work/` mean you can play any stage.
-
-**Why keep `work/` after a successful run?** So you can. When something looks
-wrong, `work/04-feature.mp4` is the clip exactly as it entered the concat.
-
-**Why `-c copy` for the join?** Speed and quality. The clips are already
-correct; re-encoding them would cost a minute and a generation of quality for
-nothing.
-
-**Why is the end card silent?** So the last narrated line has room to land
-before the video ends. A CTA that gets cut off by the fade is a wasted CTA.
-
-## Next
-
-- **[08 Prompting Claude](08-prompting-claude.md)**
-- **[09 Troubleshooting](09-troubleshooting.md)**
+A full compose re-renders the picture: minutes, not seconds, on a laptop.
+Iterate on single motion scenes in the studio, and on focus boxes with the
+gridded contact sheets described in [10 Direction](10-direction.md).

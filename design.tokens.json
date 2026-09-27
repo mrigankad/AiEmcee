@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for look and format. Read by video.config.mjs (Node) and remotion/src/theme.ts (TypeScript). Change it here and both the ffmpeg pipeline and the Remotion compositions follow.",
+  "$comment": "Single source of truth for look and format. Read by video.config.mjs (Node) and remotion/src/theme.ts (TypeScript). Change it here and both the ffmpeg pipeline and the Remotion compositions follow. Brand stops sampled from the RE-DOMS mark: orange #ec8c22, teal #1294bd, red #d62430.",
 
   "video": {
     "width": 1600,
@@ -27,21 +27,31 @@
     "muted": "rgba(0,0,0,0.08)",
     "stroke": "rgba(0,0,0,0.14)",
 
-    "brand": "#ff7b1c",
-    "brandLight": "#ffa12b",
-    "brandDeep": "#dc440c",
-    "brandSoft": "#fff6ed",
+    "brand": "#ec8c22",
+    "brandLight": "#f7ab52",
+    "brandDeep": "#c96a10",
+    "brandSoft": "#fff5e9",
 
-    "success": "#3fae69",
-    "successSoft": "rgba(63,174,105,0.12)",
-    "error": "#c62830",
+    "accent": "#1294bd",
+    "accentSoft": "rgba(18,148,189,0.12)",
+
+    "success": "#1e9e6a",
+    "successSoft": "rgba(30,158,106,0.12)",
+    "error": "#d62430",
     "errorSoft": "#fff1f2"
   },
 
   "cursor": {
     "fill": "#ffffff",
     "stroke": "#111111",
-    "ripple": "rgba(255,124,28,0.9)",
+    "ripple": "rgba(236,140,34,0.9)",
     "size": 22
+  },
+
+  "avatar": {
+    "$comment": "The Wayam AI avatar. Gradient stops sampled from assets/Logo Main.svg (the Wayam mark), light to deep; ink is the wordmark colour.",
+    "gradient": ["#FFA12B", "#FA8D23", "#F0731A", "#DC440C"],
+    "ink": "#161C26",
+    "eye": "#FFFFFF"
   }
 }
