@@ -1,0 +1,56 @@
+[
+  {
+    "id": "01-hook",
+    "title": "Where does it go next?",
+    "delivery": "hook",
+    "text": "Ask a hospital where its patient data lives, and you'll get a list of systems. [beat] Ask where that data goes next, and nobody can say."
+  },
+  {
+    "id": "02-problem",
+    "title": "Rebuilt by hand, every time",
+    "delivery": "problem",
+    "text": "Today, that picture lives in spreadsheets, ticket queues and people's memories. It's rebuilt by hand every time an auditor asks, [beat] and it's out of date by the time it's done."
+  },
+  {
+    "id": "03-reveal",
+    "title": "One live view",
+    "delivery": "explain",
+    "text": "Meet Drishti. One live view of where patient data lives, how it moves, and who can reach it. In this demo hospital, that's twelve systems, and two hundred thousand records moving every day."
+  },
+  {
+    "id": "04-flow",
+    "title": "Follow the data",
+    "delivery": "feature",
+    "text": "Follow the data, and the problems show themselves. That red ribbon is thirty-one thousand clinical notes a day, leaving a legacy system with no encryption."
+  },
+  {
+    "id": "05-access",
+    "title": "Access nobody revoked",
+    "delivery": "feature",
+    "text": "The same system still gives administrator rights to a contractor who left. It was last used three hundred days ago."
+  },
+  {
+    "id": "06-converge",
+    "title": "Four teams, one box",
+    "delivery": "payoff",
+    "text": "Inventory. Data flow. Access. Threats. [beat] Four teams' information, all pointing at one box. Drishti ranks it first, and shows its working: four factors, derived from facts already on record."
+  },
+  {
+    "id": "07-act",
+    "title": "Found, then recorded",
+    "delivery": "feature",
+    "text": "One click turns it into a finding, already filled in and linked to the flow it came from. Give it an owner and a date, and it's on the board."
+  },
+  {
+    "id": "08-audit",
+    "title": "A record nobody can edit",
+    "delivery": "explain",
+    "text": "Every decision lands in an audit trail that nobody can edit. [beat] Not even an administrator."
+  },
+  {
+    "id": "09-cta",
+    "title": "Drishti",
+    "delivery": "close",
+    "text": "Where patient data lives, how it moves, who can reach it, and what was done about it. [beat] Drishti. A Wayam AI product. Book a demo."
+  }
+]

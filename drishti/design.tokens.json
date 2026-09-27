@@ -1,0 +1,57 @@
+{
+  "$comment": "Single source of truth for look and format. Drishti on the Chronos system: Wayam orange (--ref-orange-*) is identity only; ink is black; risk red from --ref-red-600.",
+  "video": {
+    "width": 1600,
+    "height": 900,
+    "fps": 30
+  },
+  "fonts": {
+    "display": "Michroma",
+    "displayWeights": [
+      "400"
+    ],
+    "sans": "Geist",
+    "sansWeights": [
+      "400",
+      "600"
+    ],
+    "mono": "ui-monospace, SFMono-Regular, Menlo, monospace"
+  },
+  "color": {
+    "page": "#f2f2f2",
+    "container": "#ffffff",
+    "raised": "#fafafa",
+    "text": "#101010",
+    "secondary": "#464646",
+    "tertiary": "#737373",
+    "muted": "rgba(0,0,0,0.08)",
+    "stroke": "rgba(0,0,0,0.14)",
+    "brand": "#ff7b1c",
+    "brandLight": "#ff963d",
+    "brandDeep": "#c1460f",
+    "brandSoft": "#fff6ed",
+    "accent": "#101010",
+    "accentSoft": "rgba(16,16,16,0.08)",
+    "success": "#1e9e6a",
+    "successSoft": "rgba(30,158,106,0.12)",
+    "error": "#e9343c",
+    "errorSoft": "#fff1f2"
+  },
+  "cursor": {
+    "fill": "#ffffff",
+    "stroke": "#111111",
+    "ripple": "rgba(255,123,28,0.9)",
+    "size": 22
+  },
+  "avatar": {
+    "$comment": "The Wayam AI avatar. Gradient stops sampled from assets/Logo Main.svg (the Wayam mark), light to deep; ink is the wordmark colour.",
+    "gradient": [
+      "#FFA12B",
+      "#FA8D23",
+      "#F0731A",
+      "#DC440C"
+    ],
+    "ink": "#161C26",
+    "eye": "#FFFFFF"
+  }
+}

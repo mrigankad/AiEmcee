@@ -1,0 +1,67 @@
+[
+  {
+    "id": "01-hook",
+    "title": "Paste a URL. Get a test suite.",
+    "text": "What if your app could test itself? Meet Parikshan, a Wayam AI product. The AI powered testing platform that turns a code repository, or a live URL, into a runnable test suite in minutes."
+  },
+  {
+    "id": "02-problem",
+    "title": "Testing is slow. Suites are fragile.",
+    "text": "Teams spend weeks writing and maintaining automated tests. Regression suites break with every interface change. And most AI tools produce shallow tests that nobody trusts."
+  },
+  {
+    "id": "03-onboarding",
+    "title": "Connect a repo, or paste a URL",
+    "text": "Getting started takes seconds. Connect your GitHub repository, or simply paste your app's URL. No configuration files. No framework setup. No selectors written by hand. Parikshan even handles login, so authenticated pages are covered too."
+  },
+  {
+    "id": "03b-pipeline",
+    "title": "One loop",
+    "text": "Here is the loop. Connect your app. Parikshan explores it. You approve every test. Then it writes Playwright, runs in the cloud, and heals what breaks."
+  },
+  {
+    "id": "04-discovery",
+    "title": "The AI explores your app",
+    "text": "Now Parikshan explores your application like a real user. It crawls every page, maps complete user journeys, and listens to network traffic to discover your APIs, automatically."
+  },
+  {
+    "id": "05-map",
+    "title": "Your application, mapped",
+    "text": "Every screen it finds becomes a node on your application map, with the forms, the elements, and the endpoints behind each one. Click any page to see exactly what Parikshan understood before it writes a single line of code."
+  },
+  {
+    "id": "06-plan",
+    "title": "You approve every test",
+    "text": "Before writing any code, Parikshan proposes a test plan in plain language. Happy paths, edge cases, and negative scenarios. Review each one, edit it, or ask for more. You stay in control of what gets tested."
+  },
+  {
+    "id": "07-prd",
+    "title": "From requirements to tests",
+    "text": "Parikshan can also work from your product requirements. Paste a requirements document, and it extracts every requirement, classifies it, and proposes test cases traced back to the exact line they came from. And when a requirement cannot be tested as written, it says so. Vague wording, missing thresholds, and duplicated rules are flagged for you to fix, instead of being quietly ignored."
+  },
+  {
+    "id": "08-code",
+    "title": "Real Playwright code you own",
+    "text": "Approve the plan, and Parikshan generates clean, readable Playwright tests. Real code that lives in your repository, not a black box. Review it, diff it, and own it."
+  },
+  {
+    "id": "09-run",
+    "title": "Parallel runs in the cloud",
+    "text": "Run everything in the cloud, with parallel execution across Chromium, Firefox, and WebKit. Trigger suites on every pull request, on a schedule, or on demand."
+  },
+  {
+    "id": "10-triage",
+    "title": "Triage, and self-healing",
+    "text": "When something fails, you get screenshots, video replays, and network logs, with an AI root cause summary. And when your interface changes, Parikshan heals the broken locator automatically. Your suite stays green, without the maintenance burden. Flaky tests are detected and quarantined, before they can block a release."
+  },
+  {
+    "id": "11-analytics",
+    "title": "Coverage, gates, integrations",
+    "text": "Track coverage over time, and gate merges on quality. Parikshan fits straight into your workflow, with GitHub Actions, Slack, and Jira built in."
+  },
+  {
+    "id": "12-cta",
+    "title": "Start free",
+    "text": "From repository to reliable tests, in under ten minutes. Start free today. Paste your URL, and ship with confidence. Parikshan, a Wayam AI product."
+  }
+]

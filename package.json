@@ -1,6 +1,6 @@
 {
   "name": "@mrigankad/aiemcee",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Narrated product demo videos, generated end to end: Edge TTS narration, Playwright screen capture, Remotion motion graphics, ffmpeg assembly.",
   "license": "MIT",

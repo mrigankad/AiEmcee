@@ -1,0 +1,25 @@
+{
+  "name": "drishti",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Demo video for drishti, built with AiEmcee.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "narrate": "node scripts/narrate.mjs",
+    "motion": "node remotion/render.mjs",
+    "validate": "node scripts/validate.mjs",
+    "capture": "node scripts/capture.mjs",
+    "clip": "node scripts/clip.mjs",
+    "compose": "node scripts/compose.mjs",
+    "build": "npm run narrate && npm run clip && npm run capture && npm run compose",
+    "studio": "npm --prefix remotion run studio",
+    "setup": "npm install && npm --prefix remotion install && npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
