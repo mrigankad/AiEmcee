@@ -5,8 +5,8 @@
 **Narrated product demo videos, generated end to end from a text file.**
 
 You write the script. Everything else — the voiceover, the screen recording,
-the motion graphics, the titles, the cut — is produced by running four
-commands.
+the motion graphics, the titles, the transitions, the AI presenter, the sound
+design, the cut — is produced by running a handful of commands.
 
 No editor. No timeline. No manual sync.
 
@@ -40,16 +40,19 @@ No editor. No timeline. No manual sync.
 ## What it does
 
 ```
-narration.json ──▶ edge-tts ──▶ tts/*.mp3 + durations.json
-                                        │
-                        ┌───────────────┴───────────────┐
-                        ▼                               ▼
-            Playwright drives your app          Remotion renders
-            scenes.mjs ──▶ raw/*.webm        explainers + lower thirds
-                        │                               │
-                        └───────────────┬───────────────┘
-                                        ▼
-                            ffmpeg ──▶ out/demo.mp4
+narration.json ──▶ edge-tts, directed ──▶ tts/*.mp3 + durations.json
+                                                  │
+                   ┌──────────────────────────────┤
+                   ▼                              ▼
+       Playwright drives your app      timeline: every scene, transition,
+       scenes.mjs ──▶ raw/*.webm       title, focus move and sound cue
+       (or clip.mjs cuts a recording)  on the narration's clock
+                   │                              │
+                   └──────────────┬───────────────┘
+                                  ▼
+              Remotion renders the film  +  ffmpeg mixes the sound
+                                  ▼
+                 out/demo.mp4  +  poster  +  review stills
 ```
 
 The video is a build artifact. When the product changes, you re-run the build
@@ -57,7 +60,7 @@ and get a new video — you do not re-edit anything.
 
 ```bash
 npm run setup     # once
-npm run build     # narrate → motion → capture → compose
+npm run build     # narrate → clip → capture → compose
 ```
 
 ---
@@ -76,17 +79,18 @@ This inverts it.
 2. `ffprobe` measures its exact duration.
 3. Those numbers go into `tts/durations.json`.
 4. **Everything downstream cuts to them.** The recorder holds each scene until
-   it outlasts its line. The compositor trims every clip to exactly
-   `narration + gap`, and builds the audio track from the same numbers in the
-   same order.
+   it outlasts its line. The compositor gives every scene exactly
+   `narration + gap` on one timeline, then renders the picture and mixes the
+   sound from that same timeline. Transitions, titles, camera moves, the
+   avatar and the sound effects are all placed on it too.
 
 Two timelines generated from one set of numbers cannot drift. That is the whole
 trick, and it is why there is no sync step anywhere in this repo.
 
 ```
-video   68.83s
-audio   68.83s
-drift   0.005s     ← printed on every build
+video    112.37s
+audio    112.38s
+drift    0.008s     ← printed on every build
 ```
 
 ---
@@ -114,15 +118,25 @@ told that testing is expensive.
 
 ![The pipeline explainer scene](docs/media/scene-pipeline.jpg)
 
-**Animated lower thirds**, composited over the footage — rendered once as a
-transparent still, then faded in and out by ffmpeg where the rest of the edit's
-timing lives.
+**Animated lower thirds**, drawn live over the footage: the brand bar grows,
+the card unrolls, the words rise in.
 
 ![A lower third composited over a scene](docs/media/lower-third.jpg)
 
 **An end card**, held silent so the last narrated line has room to land.
 
 ![The end card](docs/media/scene-endcard.jpg)
+
+**An AI presenter** that speaks the narration and shows it as word-by-word
+captions: hosting the opening and closing full screen, then presenting the
+product from the corner.
+
+![The Wayam avatar hosting the opening line](docs/media/avatar-host.jpg)
+
+**Transitions between every scene**, like this brand wipe into the explainer
+that matters most.
+
+![A brand wipe between two motion scenes](docs/media/transition-wipe.jpg)
 
 ---
 
@@ -147,7 +161,8 @@ applied to long-form demos:
   from the edit, and the master normalised to -16 LUFS.
 - **An AI presenter**: the Wayam orb, which speaks the narration (it moves
   with the voice) and shows it as word-by-word captions. It hosts openings and
-  closings full screen, and presents product scenes from the corner.
+  closings full screen, and presents product scenes from the corner. Four
+  moods, blended between scenes; it steps aside for focus moves.
 - **A poster frame** baked in as frame 0, and a **contact sheet** of every
   scene, transition, title and focus move to review before anyone watches.
 
@@ -161,6 +176,8 @@ applied to long-form demos:
   ],
 },
 ```
+
+![The avatar's moods: neutral, happy, curious, focused](docs/media/avatar-moods.jpg)
 
 Or let Claude do it: run **`/emcee`** in this repo. It inspects the footage,
 places the focus moves, builds, reviews the stills and fixes what is wrong.
@@ -307,18 +324,22 @@ Four files. Everything else is machinery.
 {
   "id": "04-feature",
   "title": "The thing that wins the demo",
-  "text": "Now Acme explores your application like a real user. It crawls every page, maps complete journeys, and listens to network traffic to discover your APIs, automatically."
+  "delivery": "feature",
+  "text": "Now Acme explores your application like a real user. It crawls every page, maps complete journeys, and listens to network traffic. [beat] It discovers your APIs, automatically."
 }
 ```
 
-`npm run narrate` then tells you whether it is readable:
+`delivery` is how the line is said (`hook`, `problem`, `explain`, `feature`,
+`payoff`, `close`), and `[beat]` is a deliberate pause. `npm run narrate` then
+tells you whether it is readable:
 
 ```
-spoke   04-feature          12.26s   26 words  127 wpm
+spoke   04-feature         feature   12.26s   26 words  127 wpm
 ```
 
-130–150 wpm is the target. Fix pace by editing the words, never by speeding up
-the voice.
+130–150 wpm is the target for a measured film, 150–175 for an energetic one.
+Fix pace by editing the words first; then set the pace per intent in
+`tts.delivery`.
 
 ### The choreography
 
@@ -376,7 +397,12 @@ Four passes, each verified before the next:
 2. sequence       → video.config.mjs    → npm run doctor
 3. choreography   → scenes.mjs          → npm run capture  → watch
 4. motion + brand → Remotion, tokens    → npm run motion   → check a frame
+5. direction      → /emcee              → npm run compose  → review stills
 ```
+
+Step 5 is a Claude Code skill that ships with the repo (`.claude/skills/emcee`).
+It reads the footage on a grid, places focus moves on the real UI, picks the
+tone, sets up the avatar, builds, reviews every still and fixes what is wrong.
 
 Copy-paste prompts for each: **[docs/prompts/](docs/prompts/)**.
 The reasoning behind them, plus a full worked session:
@@ -423,24 +449,36 @@ design.tokens.json      design system, shared by the pipeline and Remotion
 
 scripts/
   doctor.mjs            preflight
-  narrate.mjs           edge-tts + duration measurement
+  validate.mjs          config checks, no external tools needed
+  narrate.mjs           directed edge-tts + duration measurement
   capture.mjs           Playwright recording
   clip.mjs              cuts scenes out of an existing recording
-  compose.mjs           ffmpeg assembly
+  compose.mjs           timeline → picture → sound → master → review
   lib/
     config.mjs          config + narration loading, path helpers
+    timeline.mjs        the one clock: scenes, transitions, titles, cues
+    delivery.mjs        sentence-level prosody, pauses, voice mastering
+    voice.mjs           voice envelope and caption timing, for the avatar
+    sound.mjs           music bed, effects, ducking, loudness
+    review.mjs          review stills, contact sheet, poster
+    remotion.mjs        runs the Remotion CLI safely on every OS
     ffmpeg.mjs          ffmpeg / ffprobe wrappers
     scene.mjs           the Scene API your choreography is written against
 
 remotion/
-  render.mjs            renders whatever the sequence asks for
+  render.mjs            preview renders of single motion scenes
   src/
-    Root.tsx            composition registry and the copy inside each one
+    Root.tsx            composition registry
+    scenes.ts           the copy for each motion scene
     theme.ts            reads design.tokens.json
     fonts.ts            Google Fonts, bundled rather than fetched at render time
-    components/Motion.tsx   FadeUp, Trace, Card, Eyebrow, Page
+    film/               the Film: transitions, footage camera, tones
+    avatar/             the Wayam orb, captions, host and corner presenter
+    components/Motion.tsx   FadeUp, KineticLine, Trace, Card, Eyebrow, Page
     compositions/       Problem, Pipeline, EndCard, LowerThird
 
+assets/sfx/             sound effects (Kenney, CC0)
+.claude/skills/emcee/   the /emcee directing skill
 docs/                   the handbook
 examples/parikshan/     a complete shipped film, annotated
 ```
@@ -487,10 +525,9 @@ the rhythm.
 
 | Stage | 3-minute video |
 | --- | --- |
-| narrate | ~20s (seconds when cached) |
-| motion | 1–4 min |
+| narrate | ~1 min (seconds when cached) |
 | capture | roughly real time — the browser drives the scenes live |
-| compose | 30–90s |
+| compose | 3–5 min on a laptop; `--sound-only` in under a minute |
 
 Writing the script is the long pole. The build is not.
 
