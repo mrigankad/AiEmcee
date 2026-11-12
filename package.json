@@ -1,9 +1,9 @@
 {
   "name": "@mrigankad/aiemcee",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Narrated product demo videos, generated end to end: Edge TTS narration, Playwright screen capture, Remotion motion graphics, ffmpeg assembly.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/mrigankad/AiEmcee#readme",
   "repository": {
     "type": "git",
@@ -17,7 +17,6 @@
     "demo-video",
     "product-demo",
     "screencast",
-    "remotion",
     "playwright",
     "ffmpeg",
     "edge-tts",
@@ -38,10 +37,12 @@
   "files": [
     "bin",
     "scripts",
+    "studio",
     "remotion",
     "!remotion/out",
     "!remotion/node_modules",
     "!remotion/public/film",
+    "!remotion/public/projects",
     ".claude/skills",
     "docs",
     "examples",
@@ -49,21 +50,37 @@
     "design.tokens.json",
     "narration.json",
     "scenes.mjs",
-    "video.config.mjs"
+    "video.config.mjs",
+    "NOTICE",
+    "projects/_template",
+    "!remotion/src/local.tsx",
+    "!remotion/src/compositions/*/",
+    "!remotion/public/*",
+    "remotion/public/README.md",
+    "remotion/public/mark.svg",
+    "!assets/*.mp4",
+    "!assets/*.mov",
+    "!assets/*.mp3",
+    "!assets/*.wav",
+    "!assets/music",
+    "!docs/media/preview.gif"
   ],
   "scripts": {
-    "doctor": "node scripts/doctor.mjs",
-    "validate": "node scripts/validate.mjs",
-    "narrate": "node scripts/narrate.mjs",
+    "doctor": "node bin/aiemcee.mjs doctor",
+    "validate": "node bin/aiemcee.mjs validate",
+    "narrate": "node bin/aiemcee.mjs narrate",
     "motion": "node remotion/render.mjs",
-    "capture": "node scripts/capture.mjs",
-    "clip": "node scripts/clip.mjs",
-    "compose": "node scripts/compose.mjs",
+    "capture": "node bin/aiemcee.mjs capture",
+    "clip": "node bin/aiemcee.mjs clip",
+    "compose": "node bin/aiemcee.mjs compose",
     "build": "npm run narrate && npm run clip && npm run capture && npm run compose",
-    "studio": "npm --prefix remotion run studio",
-    "setup": "npm install && npm --prefix remotion install && npx playwright install chromium"
+    "studio": "node scripts/motion-studio.mjs",
+    "setup": "npm ci && npm --prefix remotion ci && npx playwright install chromium",
+    "film": "node bin/aiemcee.mjs film",
+    "web": "node bin/aiemcee.mjs studio"
   },
   "dependencies": {
-    "playwright": "^1.49.0"
+    "@anthropic-ai/sdk": "^1.8.0",
+    "playwright": "1.62.1"
   }
 }

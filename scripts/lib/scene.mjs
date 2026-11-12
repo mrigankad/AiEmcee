@@ -91,16 +91,20 @@ export class Scene {
 
   /** Glide the virtual cursor to an absolute viewport coordinate. */
   async cursorTo(x, y, ms = 520) {
-    const steps = Math.max(8, Math.round(ms / 16));
+    // Time-based, not step-based: under a heavy screencast each step costs ~60 ms, and a fixed step count
+    // turned a 0.5 s glide into 2-3 s. Frames are dropped instead, so the glide keeps its duration.
     const x0 = this.x;
     const y0 = this.y;
+    const t0 = Date.now();
 
-    for (let i = 1; i <= steps; i++) {
-      const e = ease(i / steps);
+    for (;;) {
+      const p = Math.min(1, (Date.now() - t0) / Math.max(1, ms));
+      const e = ease(p);
       const nx = x0 + (x - x0) * e;
       const ny = y0 + (y - y0) * e;
       await this.page.evaluate(([a, b]) => window.__cursorTo(a, b), [nx, ny]);
       await this.page.mouse.move(nx, ny);
+      if (p >= 1) break;
       await sleep(16);
     }
 

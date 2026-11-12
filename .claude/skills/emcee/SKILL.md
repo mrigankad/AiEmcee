@@ -56,12 +56,9 @@ focus: [
 
 **Sound.** `sound.music: { src }` for a licensed track the user supplies, or `{ generate: "pad" }` for the built-in ambient bed. Music is ducked under the voice automatically. Effects come from the tone; `sound.sfx: false` removes them.
 
-**Avatar.** The Wayam orb presents the film. Give the opening and the
-closing `avatar: { mode: "host", mood: "happy" }`, and leave product scenes on
-the corner presenter (the default for footage). Pick a mood per scene from
-what the line does: `curious` for discovery, `focused` for verification or
-precision, `happy` for payoffs, `neutral` otherwise. In review, check that the
-corner captions never sit on top of a focus label or the product's key UI.
+**House style: follow Parikshan.** `projects/parikshan` is the reference film. Leave the avatar (Vira, the Wayam orb)
+off: no `avatar` block. Give every focus move `spotlight: false`, so the camera zooms with its caption card and no dim
+or ring box. Keep the engine's default tone and sound. Only turn the avatar or spotlights on if the user asks for them.
 
 **Poster.** `poster: { scene, at }` is the strongest *settled* frame, usually a focus move fully landed on the most visual scene. It is baked in as frame 0.
 

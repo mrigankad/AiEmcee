@@ -73,7 +73,15 @@ type SegmentBase = {
 
 export type VideoSegment = SegmentBase & { kind: "video"; src: string; srcDuration: number };
 export type MotionSegment = SegmentBase & { kind: "motion"; composition: string };
-export type Segment = VideoSegment | MotionSegment;
+/**
+ * A still image with a gentle camera move (Ken Burns): zoom from `zoom[0]` to
+ * `zoom[1]` while the centre travels from `pan[0]` to `pan[1]` (fractions of the
+ * frame), over the scene's whole time on screen. scripts/lib/stills.mjs draws
+ * the same move with ffmpeg alone, so the two paths match.
+ */
+export type StillMove = { zoom: [number, number]; pan: [[number, number], [number, number]]; ease: "inOut" | "linear" };
+export type StillSegment = SegmentBase & { kind: "still"; src: string; move: StillMove };
+export type Segment = VideoSegment | MotionSegment | StillSegment;
 
 export type Timeline = {
   version: 1;

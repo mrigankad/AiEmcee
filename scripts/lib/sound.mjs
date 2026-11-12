@@ -15,7 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { at } from "./config.mjs";
+import { assetAt, at } from "./config.mjs";
 import { ff, probe } from "./ffmpeg.mjs";
 
 const RATE = 48000;
@@ -125,7 +125,7 @@ function loudnorm(src, dest, target = TARGET) {
 /** Finds a named effect in assets/sfx, whatever its extension. */
 function sfxFile(config, name) {
   for (const ext of [".ogg", ".wav", ".mp3"]) {
-    const file = at(config.paths.assets, "sfx", `${name}${ext}`);
+    const file = assetAt(config.paths.assets, "sfx", `${name}${ext}`);
     if (fs.existsSync(file)) return file;
   }
   throw new Error(`sound effect "${name}" not found in ${config.paths.assets}/sfx/`);

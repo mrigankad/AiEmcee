@@ -1,0 +1,22 @@
+AiEmcee
+Copyright 2026 Mriganka (https://github.com/mrigankad)
+
+AiEmcee was designed and built by Mriganka. This includes the AiEmcee Motion
+engine (the scene runtime, frame server and renderer), the audio-first
+timeline, the directed voice, the capture pipeline, AiEmcee Studio, Rasa and
+Motion Studio.
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+If you redistribute AiEmcee, or a work that includes or is derived from it,
+keep this NOTICE file (or its text) with it, as section 4(d) of the license
+requires. A credit in the product's about screen, documentation or credits,
+for example "Built with AiEmcee by Mriganka", is the expected way to do that.
+
+The names "AiEmcee", "AiEmcee Motion", "AiEmcee Studio" and "Rasa", and the
+AiEmcee logo, identify this project. The license does not grant permission to
+use them to name or promote other products (section 6).
+
+Third-party components keep their own licenses: sound effects by Kenney
+(CC0); fonts from Fontsource under the SIL Open Font License 1.1; the
+direction system adapts the creative approach of /brag (MIT).

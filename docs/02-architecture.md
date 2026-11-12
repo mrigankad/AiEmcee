@@ -43,8 +43,9 @@ is always complete even when you narrate a single scene.
 
 ### 2. motion — `remotion/src/`
 
-Remotion renders React components to video, frame by frame, in headless
-Chromium. It is used for three things, all rendered inside the one `Film`
+AiEmcee Motion, the in-house engine, renders React components to video, frame
+by frame, in headless Chromium. Scenes use the familiar scene API (they import
+from `"remotion"`, which the bundler aliases to `remotion/engine/runtime.tsx`). It is used for three things, all rendered inside the one `Film`
 composition by `compose`:
 
 **Explainer scenes** (`from: "motion"`) — full frames that make an argument
@@ -63,10 +64,17 @@ previewing; the film itself does not need it.
 ### 3. capture — `scripts/capture.mjs`
 
 ```
-scenes.mjs + your running app ──▶ Playwright ──▶ raw/<id>.webm
+scenes.mjs + your running app ──▶ Playwright + CDP screencast ──▶ work/<id>/frames/*.png
+                                                              ──▶ raw/<id>.mp4 (lossless, 60 fps)
 ```
 
-Playwright drives a real Chromium against your real app and records it.
+Playwright drives a real Chromium against your real app. In the default
+`capture.mode: "screencast"` the page renders at viewport x deviceScaleFactor
+(1920x1080 at dsf 2 = 3840x2160), every composited frame is taken over CDP
+`Page.startScreencast` with its timestamp, and ffmpeg assembles the frames
+with their real durations into a constant-60 fps lossless H.264 (4:4:4).
+`capture.mode: "recordVideo"` keeps the old Playwright VP8 recorder
+(`raw/<id>.webm`, 1x) for compatibility. Why and how: [11 Quality](11-quality.md).
 
 **One browser context per scene.** This is what produces one video file per
 scene rather than one long take. A scene that goes wrong is re-recorded on its
@@ -96,14 +104,17 @@ carets keep blinking, and the shot stays alive.
 ### 4. compose — `scripts/compose.mjs`
 
 ```
-config + durations ──▶ timeline ──┬──▶ Remotion Film ──▶ picture ─┐
+config + durations ──▶ timeline ──┬──▶ Motion Film  ──▶ picture ─┐
 raw/* + tts/*.mp3 ────────────────┴──▶ ffmpeg mix    ──▶ sound   ─┴──▶ out/demo.mp4
 ```
 
 **timeline** — every scene gets exactly `narration + gap` seconds; transitions,
 titles, focus moves and sound cues are placed on the same clock.
 
-**picture** — one Remotion composition renders the whole film, silent.
+**picture** — one composition, rendered by AiEmcee Motion, renders the whole film, silent, from
+PNG frames at CRF 12. Footage is the 2x source drawn scaled down, so it is
+supersampled at 1x and a focus zoom up to 2x uses native pixels.
+`--master 4k` renders the same composition at scale 2 (3840x2160).
 
 **sound** — narration, a ducked music bed and effects are placed by absolute
 time and loudness-normalised.
@@ -113,6 +124,30 @@ and review stills are written to `out/review/`.
 
 Then it prints the drift between picture and sound. Under a few hundredths of
 a second is correct. The detail is in [07 Compositing](07-compositing.md).
+
+## Projects: data, with one shared engine
+
+```
+bin/aiemcee.mjs <stage> --project projects/<name>
+        │  sets AIEMCEE_PROJECT
+        ▼
+scripts/*.mjs (engine) ── scripts/lib/config.mjs: at() = project dir, engineAt() = repo root
+        │
+        ├── reads   projects/<name>/{video.config.mjs, narration.json, scenes.mjs, design.tokens.json, assets/}
+        ├── writes  projects/<name>/{tts, raw, work, out}/             (git-ignored)
+        └── stages  remotion/public/projects/<name>/media/ + timeline   (git-ignored)
+                    renders the shared remotion/ bundle with
+                    --props=<project>/work/props.json  (the timeline)
+                    REMOTION_AIEMCEE_TOKENS=<merged tokens>  (brand, fonts; read in remotion/src/theme.ts)
+```
+
+A project's `video.config.mjs` calls `defineProject(import.meta.url, {...})`
+from `scripts/lib/defaults.mjs`: engine defaults, deep-merged with the
+project's overrides (arrays replace). Tokens are the engine's
+`design.tokens.json`, then the project's, then `tokens` in the config.
+Sound effects fall back to the engine's `assets/sfx/`. Start from
+`projects/_template/`. Without `--project`, the root `video.config.mjs` film
+builds exactly as before.
 
 ## Data flow
 
@@ -144,8 +179,8 @@ a second is correct. The detail is in [07 Compositing](07-compositing.md).
 ## Why the config is shaped this way
 
 **`design.tokens.json` is JSON, not JavaScript,** because it has to be read
-from two runtimes: Node (`video.config.mjs`) and TypeScript inside Remotion's
-bundler (`remotion/src/theme.ts`). JSON is the only format both consume without
+from two runtimes: Node (`video.config.mjs`) and TypeScript inside the motion
+engine's esbuild bundle (`remotion/src/theme.ts`). JSON is the only format both consume without
 a build step. Frame size and frame rate live there for the same reason — if the
 compositor and the compositions disagreed about 1600×900, every motion scene
 would be silently rescaled.

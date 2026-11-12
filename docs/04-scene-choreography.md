@@ -23,7 +23,7 @@ export const SCENES = {
 ```
 
 Only ids marked `from: "capture"` in `video.config.mjs` are recorded. Motion
-scenes are Remotion's job and need nothing here.
+scenes are the motion engine's job and need nothing here.
 
 ## The Scene API
 

@@ -1,14 +1,55 @@
 /**
  * Design tokens for the motion graphics.
  *
- * Read from ../../design.tokens.json rather than declared here, so the
- * compositions and the ffmpeg pipeline can never disagree about frame size,
- * frame rate or brand colour. Change the JSON, not this file.
+ * The engine's ../../design.tokens.json is the base. When a project is
+ * rendered (scripts/compose.mjs --project ...), its merged tokens arrive as
+ * the REMOTION_AIEMCEE_TOKENS environment variable, which Remotion passes to
+ * the page at runtime, and override the base field by field. So one shared
+ * remotion/ bundle draws every project in its own brand.
+ *
+ * Composition size and frame rate inside the Film come from the timeline;
+ * W/H/FPS here only size the standalone studio previews.
  */
-import tokens from "../../design.tokens.json";
+import base from "../../design.tokens.json";
+
+type Tokens = typeof base;
+
+const isPlain = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === "object" && !Array.isArray(v);
+
+function merge<T>(a: T, b: unknown): T {
+  if (!isPlain(a) || !isPlain(b)) return (b === undefined ? a : b) as T;
+  const out: Record<string, unknown> = { ...a };
+  for (const [k, v] of Object.entries(b)) out[k] = merge((a as Record<string, unknown>)[k], v);
+  return out as T;
+}
+
+function projectTokens(): unknown {
+  try {
+    const raw = typeof process !== "undefined" ? process.env.REMOTION_AIEMCEE_TOKENS : undefined;
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export const tokens: Tokens = merge(base, projectTokens());
 
 export const theme = tokens.color;
 export const cursor = tokens.cursor;
+
+/** Optional caption/lower-third surface (project tokens `overlay`); defaults keep the white card. */
+const ov = ((tokens as unknown as { overlay?: Record<string, string> }).overlay ?? {});
+export const overlay = {
+  bg: ov.bg ?? "rgba(255,255,255,0.95)",
+  card: ov.card ?? "#FFFFFF",
+  text: ov.text ?? theme.text,
+  label: ov.label ?? "#16181D",
+  kicker: ov.kicker ?? theme.brandDeep,
+  border: ov.border ?? theme.muted,
+  mark: ov.mark ?? "mark.svg",
+  scale: Number(ov.scale ?? 1),
+};
 
 export const W = tokens.video.width;
 export const H = tokens.video.height;

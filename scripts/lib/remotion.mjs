@@ -1,44 +1,22 @@
 /**
- * Runs the Remotion CLI from the remotion/ project.
- *
- * A .cmd shim on Windows is a batch file, so it can only be launched through a
- * shell — and a shell does not quote the arguments Node hands it. Any space in
- * the checkout path would then split a path in half.
- *
- * So: nothing on the command line is allowed to contain a space. The bin
- * directory goes on PATH (an environment variable, which is immune to this),
- * and every path is passed relative to the remotion/ directory.
+ * Where the scenes live: the remotion/ package (React compositions in src/,
+ * the AiEmcee Motion runtime in engine/, shared art in public/). The folder
+ * keeps its historical name so existing projects and their staged media keep
+ * working; nothing in it depends on Remotion any more. The renderer is
+ * scripts/lib/motion/.
  */
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-import { at } from "./config.mjs";
+import { engineAt } from "./config.mjs";
 
-export const REMOTION_DIR = at("remotion");
-export const ENTRY = "src/index.ts";
+export const REMOTION_DIR = engineAt("remotion");
 
-const binDir = path.join(REMOTION_DIR, "node_modules", ".bin");
-const exe = process.platform === "win32" ? "remotion.cmd" : "remotion";
-
-export function assertRemotionInstalled() {
-  if (!fs.existsSync(path.join(binDir, exe))) {
-    throw new Error("remotion is not installed. Run:  npm --prefix remotion install");
+/** Throws with the fix when the scene package's dependencies are missing. */
+export function assertScenesInstalled() {
+  for (const dep of ["react", "react-dom", "esbuild"]) {
+    if (!fs.existsSync(path.join(REMOTION_DIR, "node_modules", dep))) {
+      throw new Error(`the scenes' dependencies are not installed (${dep}). Run:  npm --prefix remotion install`);
+    }
   }
-}
-
-/** A path as the CLI should see it: relative to remotion/, forward slashes. */
-export const rel = (abs) => path.relative(REMOTION_DIR, abs).split(path.sep).join("/");
-
-export function remotion(args, { quiet = true } = {}) {
-  assertRemotionInstalled();
-  const bad = args.find((a) => a.includes(" "));
-  if (bad) throw new Error(`remotion argument contains a space, which breaks on Windows: ${bad}`);
-
-  execFileSync(exe, [...args, ...(quiet ? ["--log=error"] : [])], {
-    cwd: REMOTION_DIR,
-    stdio: "inherit",
-    shell: process.platform === "win32",
-    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env.PATH}` },
-  });
 }

@@ -42,15 +42,17 @@ Both. The npm package and the browser binary are separate downloads.
 npm --prefix remotion install
 ```
 
-Remotion is a separate package with its own dependency tree, so a root
-`npm install` does not reach it. `npm run setup` does both.
+`remotion/` is a separate package with its own dependency tree (react,
+react-dom, esbuild and the `@fontsource` fonts the motion engine bundles), so a
+root `npm install` does not reach it. `npm run setup` does both. Run this too
+if a build fails because react or esbuild cannot be found.
 
 ### `'C:\Users\...\claude' is not recognized as an internal or external command`
 
 A space in the checkout path, hitting a Windows `.cmd` shim launched through a
-shell. Already fixed in `remotion/render.mjs` (bin directory on PATH, all paths
-relative). If you see it in code you have added, do the same rather than trying
-to quote.
+shell. The engine no longer launches any `.cmd` shim (the motion engine runs in
+process). If you see it in code you have added, put the bin directory on PATH
+and pass relative paths rather than trying to quote.
 
 ## Narration
 
@@ -176,7 +178,7 @@ specific reason. The final encode is what determines quality.
 
 ## Motion
 
-### `Composition with id "X" not found`
+### `no composition "X"; registered: …` (or `Film: no motion scene registered as "X"`)
 
 Registered in `Root.tsx`? The `id` prop must match `composition` in the
 sequence exactly, including case. For the film, the composition must also be
@@ -184,9 +186,23 @@ in `MOTION` in `remotion/src/scenes.ts`; `npm run validate` checks this.
 
 ### Fonts render as fallbacks
 
-Load through `@remotion/google-fonts` (see `fonts.ts`), never a `<link>`. The
-renderer screenshots frames headlessly and will capture one before a network
-font arrives.
+Load through the local `@fontsource` imports in `fonts.ts`, never a `<link>`.
+The renderer screenshots frames headlessly and will capture one before a
+network font arrives. A family name in the tokens that is not in `FAMILIES`
+falls back to the engine default.
+
+### A build error
+
+The motion engine bundles `remotion/src` with esbuild. A syntax or import
+error is printed in the terminal, and in Motion Studio (`npm run studio`) it
+shows as an overlay until you save a fix.
+
+### A render stalls on a frame
+
+Each frame waits for its images, fonts and video frames before it is
+captured. A frame that never finishes means an image or video failed to load;
+the page logs `motion: could not load …` with the path. Check the file exists
+under `remotion/public/`.
 
 ### The render flickers
 
@@ -206,7 +222,7 @@ row. Padding moves the nodes but not the rail. Adjust both, or use margins.
 
 ### Renders are slow
 
-Normal — one to four minutes for a few scenes. Use `npm run studio` to iterate
+Use `npm run studio` to iterate
 and render only at the end. Render one composition at a time with
 `npm run motion -- Problem`.
 

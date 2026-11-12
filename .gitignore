@@ -8,6 +8,18 @@ work/
 out/
 remotion/out/
 remotion/public/film/
+remotion/public/projects/
+
+# Per-project generated media (projects/<name>/...). Sources stay tracked:
+# video.config.mjs, narration.json, scenes.mjs, design.tokens.json, PROMPTS.md.
+projects/*/tts/
+projects/*/raw/
+projects/*/work/
+projects/*/out/
+projects/*/assets/*.mp4
+projects/*/assets/*.mov
+projects/*/assets/*.mp3
+projects/*/assets/*.wav
 
 # Large source media you drop in yourself (logo stings, music beds, and the
 # recordings that `from: "clip"` scenes are cut out of).
@@ -26,3 +38,35 @@ Redoms/
 *.log
 .DS_Store
 Thumbs.db
+
+# YouTube upload credentials
+youtube.client_secret.json
+youtube.token.json
+
+# Studio state per project (versions, comments, job history)
+**/.aiemcee/
+**/.aiemcee-*.json
+
+# Your films. projects/ holds your own and your clients' work; only the
+# template and the engine's smoke-test fixture are part of AiEmcee.
+projects/*
+!projects/_template/
+!projects/_smoke/
+drishti/
+
+# Your own scenes and their art (see remotion/src/local.example.tsx). The
+# engine's scenes are the files directly in compositions/; per-film scenes
+# live in folders under it, and per-film art in folders under public/.
+remotion/src/local.tsx
+remotion/src/compositions/*/
+remotion/public/*
+!remotion/public/README.md
+!remotion/public/mark.svg
+
+# Personal working files
+references/
+share/
+thumbs/
+youtube-listings.md
+*-tmp.mjs
+*.tmp.mjs

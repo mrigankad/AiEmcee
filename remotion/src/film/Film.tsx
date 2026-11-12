@@ -19,6 +19,7 @@ import { fontSans } from "../fonts";
 import { MOTION } from "../scenes";
 import { theme } from "../theme";
 import { Footage } from "./Footage";
+import { StillBody } from "./Still";
 import { ToneProvider } from "./tone";
 import { enterStyle, exitStyle, WipeEdge } from "./transitions";
 import type { MotionSegment, Segment, Timeline } from "./types";
@@ -75,7 +76,7 @@ export function Film({ timeline }: FilmProps) {
             <Sequence key={seg.id} name={seg.id} from={from} durationInFrames={until - from}>
               <AbsoluteFill style={exitP > 0 && next ? exitStyle(next.transition.type, exitP) : undefined}>
                 <AbsoluteFill style={enterStyle(seg.transition.type, enterP)}>
-                  <SegmentBody seg={seg} fps={fps} width={width} height={height} tone={tone} />
+                  <SegmentBody seg={seg} fps={fps} width={width} height={height} tone={tone} frames={until - from} />
                 </AbsoluteFill>
               </AbsoluteFill>
             </Sequence>
@@ -119,17 +120,20 @@ function SegmentBody({
   width,
   height,
   tone,
+  frames,
 }: {
   seg: Segment;
   fps: number;
   width: number;
   height: number;
   tone: Timeline["tone"];
+  frames: number;
 }) {
   if (seg.kind === "video") {
     const plain = seg.id === "00-intro" || seg.id === "zz-outro";
     return <Footage segment={seg} tone={tone} fps={fps} width={width} height={height} plain={plain} />;
   }
+  if (seg.kind === "still") return <StillBody seg={seg} width={width} height={height} frames={frames} />;
   return <MotionBody seg={seg} fps={fps} />;
 }
 

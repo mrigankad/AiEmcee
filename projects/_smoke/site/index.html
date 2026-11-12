@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Smoke fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #fff; color: #16181D; }
+  header { height: 64px; display: flex; align-items: center; padding: 0 40px; border-bottom: 1px solid #e6e6ea; font-weight: 600; font-size: 18px; }
+  .grid { display: grid; grid-template-columns: 760px 1fr; gap: 40px; padding: 40px; }
+  .card { border: 1px solid #e6e6ea; border-radius: 10px; padding: 20px; background: #F7F7F8; }
+  .tiny { font-size: 12px; line-height: 16px; color: #5E6370; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  td, th { border-bottom: 1px solid #e6e6ea; padding: 6px 8px; text-align: left; }
+  .pass { color: #16A06A; font-weight: 600; } .fail { color: #E5484D; font-weight: 600; }
+  button { font: 600 14px "Segoe UI", Arial; background: #C9480A; color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; cursor: pointer; }
+  .spacer { height: 900px; }
+</style>
+</head>
+<body>
+<header>Smoke fixture: 12px text sharpness</header>
+<div class="grid">
+  <div class="card" id="tiny">
+    <p class="tiny">The quick brown fox jumps over the lazy dog. 0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz.</p>
+    <table>
+      <tr><th>Test</th><th>Status</th><th>Duration</th><th>Trace</th></tr>
+      <tr><td>login.spec.ts: rejects bad password</td><td class="pass">passed</td><td>1.42s</td><td>REQ-014</td></tr>
+      <tr><td>cart.spec.ts: totals include VAT 20%</td><td class="fail">failed</td><td>2.07s</td><td>REQ-031</td></tr>
+      <tr><td>search.spec.ts: empty query shows hint</td><td class="pass">passed</td><td>0.88s</td><td>OBS-112</td></tr>
+      <tr><td>profile.spec.ts: avatar upload &lt; 2 MB</td><td class="pass">passed</td><td>3.10s</td><td>REQ-052</td></tr>
+    </table>
+    <p class="tiny">Hairlines: 1px borders, il1I| O0o 8B 5S rn m. Fine print should read cleanly at 1x and when zoomed 2x.</p>
+  </div>
+  <div class="card">
+    <p style="font-size:28px;font-weight:700;margin:0 0 12px">Run #4821</p>
+    <p class="tiny">Click the button to change the page; the screencast only emits frames on change.</p>
+    <button id="go">Run again</button>
+    <p id="out" class="tiny">Idle.</p>
+  </div>
+</div>
+<div class="spacer"></div>
+<script>
+  document.getElementById("go").addEventListener("click", () => {
+    document.getElementById("out").textContent = "Running 4 tests across 2 workers... 3 passed, 1 failed.";
+  });
+</script>
+</body>
+</html>

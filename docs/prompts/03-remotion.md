@@ -1,6 +1,6 @@
 # Prompt 03 · Motion graphics
 
-Produces Remotion compositions — the frames that make an argument rather than
+Produces compositions (rendered by AiEmcee Motion) — the frames that make an argument rather than
 showing a UI.
 
 ---

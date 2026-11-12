@@ -22,14 +22,26 @@ jobs:
           npm ci
           npm --prefix remotion ci
 
-      - name: Typecheck the compositions
+      - name: Typecheck the scenes and the motion runtime
         run: npm --prefix remotion run typecheck
+
+      # The motion runtime's spring, interpolate and easing must match, bit for
+      # bit, the values the scenes were timed against (engine/parity.golden.json).
+      - name: Motion parity
+        run: npm --prefix remotion test
 
       # Catches a sequence entry with no choreography, an unregistered
       # composition, a duplicate id — everything that would otherwise surface
       # twenty minutes into a build. Needs no ffmpeg, edge-tts or browser.
       - name: Validate the project
-        run: npm run validate
+        run: |
+          npm run validate
+          node bin/aiemcee.mjs validate --project projects/_smoke
+          node bin/aiemcee.mjs validate --project projects/_template
+
+      - name: Check the studio server
+        run: |
+          for f in studio/server.mjs studio/agent.mjs studio/lib/*.mjs scripts/*.mjs scripts/lib/*.mjs scripts/lib/motion/*.mjs; do node --check "$f"; done
 
       - name: Scaffold smoke test
         run: |
@@ -39,7 +51,33 @@ jobs:
           test -f /tmp/smoke/.gitignore
           test -f /tmp/smoke/scripts/compose.mjs
           test -f /tmp/smoke/remotion/src/Root.tsx
+          test -f /tmp/smoke/remotion/engine/runtime.tsx
+          test -f /tmp/smoke/remotion/src/local.example.tsx
+          test -f /tmp/smoke/scripts/lib/motion/studio.html
+          # A maintainer's own scenes and art never reach a new project.
+          test ! -e /tmp/smoke/remotion/src/local.tsx
           echo "scaffold ok"
 
       - name: Check the package contents
-        run: npm pack --dry-run
+        run: |
+          npm pack --dry-run 2>&1 | tee pack.txt
+          if grep -E "remotion/src/local[.]tsx|remotion/src/compositions/[^/]+/|projects/[^_]|assets/.*[.](mp4|mov|mp3|wav)" pack.txt; then echo "private or media files in the package"; exit 1; fi
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run build

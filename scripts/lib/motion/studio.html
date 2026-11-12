@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion Studio · AiEmcee</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFB547%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%23F98620%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D9400B%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22256%22%20height%3D%22256%22%20rx%3D%2260%22%20fill%3D%22url(%23g)%22%2F%3E%3Cpath%20d%3D%22M98%2076Q98%2062%20110%2069L180%20112Q192%20120%20180%20128L110%20171Q98%20178%2098%20164Z%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22196%22%20cy%3D%2270%22%20r%3D%2215%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #fff; --rail: #f7f7f8; --line: #e8e8ec; --line-2: #d9d9e0; --sunk: #efeff2;
+    --ink: #16181d; --body: #5e6370; --mute: #7a7f8c;
+    --action: #c9480a; --kicker: #f26b3a; --peach: #fff3ec; --peach-2: #fff0e6;
+    --motion: #7c5cff; --motion-bg: #f1edff;
+    --orb: linear-gradient(135deg in oklab, #ffa12b 0%, #f0731a 55%, #dc440c 100%);
+    --sans: "Urbanist", system-ui, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--page); color: var(--ink); font: 14px/1.45 var(--sans); -webkit-font-smoothing: antialiased; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--kicker); outline-offset: 2px; }
+  .app { display: grid; grid-template-columns: 264px 1fr; height: 100vh; }
+
+  /* Sidebar ------------------------------------------------------- */
+  aside { display: flex; flex-direction: column; min-height: 0; background: var(--rail); border-right: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 14px 16px 12px; }
+  .brand b { font-size: 17px; }
+  .brand span { font-size: 13px; color: var(--mute); }
+  .search { margin: 0 10px 8px; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; background: var(--page); border: 1px solid var(--line); border-radius: 10px; }
+  .search:focus-within { border-color: var(--kicker); }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13px; }
+  .search kbd { font: 11px var(--mono); color: var(--mute); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .list { flex: 1; overflow: auto; padding: 4px 10px 12px; }
+  .group { margin-top: 10px; }
+  .group h3 { margin: 0; padding: 6px 10px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); display: flex; justify-content: space-between; cursor: pointer; user-select: none; }
+  .group.closed .items { display: none; }
+  .item { display: flex; align-items: center; gap: 8px; width: 100%; height: 32px; padding: 0 10px; border: 1px solid transparent; background: none; border-radius: 8px; text-align: left; }
+  .item:hover { background: var(--sunk); }
+  .item.on { background: var(--page); border-color: var(--line); box-shadow: 0 1px 2px #16181d0d; font-weight: 700; }
+  .item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line-2); flex: none; }
+  .item.on .dot { background: var(--kicker); }
+  .item .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item small { color: var(--mute); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .foot { padding: 10px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mute); display: flex; align-items: center; gap: 8px; }
+  .live { width: 7px; height: 7px; border-radius: 50%; background: #16a06a; box-shadow: 0 0 0 3px #e7f6ef; }
+  .live.off { background: var(--mute); box-shadow: none; }
+
+  /* Main ---------------------------------------------------------- */
+  main { display: flex; flex-direction: column; min-width: 0; }
+  header { height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 17px; font-weight: 700; }
+  .chip { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--sunk); color: var(--body); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip.motion { background: var(--motion-bg); color: var(--motion); font-weight: 700; }
+  .spacer { flex: 1; }
+  /* Dropdowns ----------------------------------------------------- */
+  .dd { position: relative; }
+  .dd-btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 12px; border: 1px solid var(--line); background: var(--page); border-radius: 8px; font-size: 13px; color: var(--ink); white-space: nowrap; }
+  .dd-btn:hover { border-color: var(--line-2); }
+  .dd-btn[aria-expanded="true"] { border-color: var(--kicker); box-shadow: 0 0 0 3px var(--peach); }
+  .dd-btn .lbl { color: var(--mute); }
+  .dd-btn svg { color: var(--mute); transition: transform .15s; }
+  .dd-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .dd-menu { position: absolute; z-index: 30; min-width: 100%; padding: 4px; margin: 0; list-style: none; background: var(--page); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px #16181d24, 0 2px 6px #16181d14; opacity: 0; transform: translateY(-4px) scale(.98); pointer-events: none; transition: opacity .12s, transform .12s; max-height: 280px; overflow: auto; }
+  .dd-menu.down { top: calc(100% + 6px); right: 0; transform-origin: top right; }
+  .dd-menu.up { bottom: calc(100% + 6px); right: 0; transform-origin: bottom right; transform: translateY(4px) scale(.98); }
+  .dd.open .dd-menu { opacity: 1; transform: none; pointer-events: auto; }
+  .dd-menu li { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 6px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+  .dd-menu li .chk { width: 14px; color: var(--action); visibility: hidden; }
+  .dd-menu li[aria-selected="true"] { font-weight: 700; }
+  .dd-menu li[aria-selected="true"] .chk { visibility: visible; }
+  .dd-menu li.active { background: var(--sunk); }
+  .dd-menu li .hint { margin-left: auto; padding-left: 16px; color: var(--mute); font: 11px var(--mono); }
+  .dd-menu li .sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line-2); }
+
+  /* Scrollbars ---------------------------------------------------- */
+  * { scrollbar-width: thin; scrollbar-color: #d1d2da transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d1d2da; border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #a9adb8; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+
+  /* Stage backgrounds --------------------------------------------- */
+  .stage.bg-dark { background: #16181d; background-image: radial-gradient(#2a2d35 1px, transparent 1px); background-size: 18px 18px; }
+  .stage.bg-checker { background: #fff; background-image: repeating-conic-gradient(#ececef 0% 25%, #fff 0% 50%); background-size: 20px 20px; }
+  .stage.bg-plain { background: var(--rail); background-image: none; }
+
+  .stage { flex: 1; position: relative; overflow: auto; background: var(--rail); background-image: radial-gradient(#d9d9e0 1px, transparent 1px); background-size: 18px 18px; }
+  .frame { position: absolute; transform-origin: 0 0; border: 0; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px #16181d14, 0 12px 48px #16181d1f; transition: opacity .15s; }
+  .frame.loading { opacity: .35; }
+  .spinner { position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; margin: -14px; border-radius: 50%; border: 3px solid var(--peach-2); border-top-color: var(--kicker); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .err { position: absolute; left: 20px; right: 20px; bottom: 20px; max-height: 45%; overflow: auto; background: #fff; border: 1px solid #f3c9bd; border-left: 4px solid var(--action); border-radius: 10px; padding: 12px 14px; box-shadow: 0 8px 30px #16181d1f; }
+  .err b { display: block; color: var(--action); margin-bottom: 4px; }
+  .err pre { margin: 0; white-space: pre-wrap; font: 12px/1.5 var(--mono); color: var(--body); }
+
+  /* Transport ----------------------------------------------------- */
+  .transport { flex: none; border-top: 1px solid var(--line); background: var(--page); padding: 10px 20px 14px; }
+  .track { position: relative; height: 34px; cursor: pointer; user-select: none; touch-action: none; }
+  .scenes { position: absolute; inset: 0 0 12px 0; display: flex; gap: 2px; }
+  .scenes div { min-width: 0; border-radius: 4px; background: var(--sunk); font-size: 11px; color: var(--body); padding: 3px 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .scenes div.m { background: var(--motion-bg); color: var(--motion); }
+  .scenes div.cur { background: var(--peach); color: var(--action); box-shadow: inset 0 0 0 1px var(--kicker); }
+  .rail { position: absolute; left: 0; right: 0; bottom: 3px; height: 4px; border-radius: 4px; background: var(--sunk); }
+  .fill { position: absolute; left: 0; bottom: 3px; height: 4px; border-radius: 4px; background: var(--orb); }
+  .head { position: absolute; top: -2px; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 2px; pointer-events: none; }
+  .head::after { content: ""; position: absolute; left: -5px; bottom: -2px; width: 12px; height: 12px; border-radius: 50%; background: var(--page); border: 2px solid var(--ink); }
+  .controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .btn { height: 34px; min-width: 34px; padding: 0 10px; display: inline-grid; place-items: center; border: 1px solid var(--line); background: var(--page); border-radius: 8px; color: var(--ink); }
+  .btn:hover { border-color: var(--line-2); }
+  .play { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--orb); color: #fff; display: grid; place-items: center; box-shadow: inset 0 1px 0 #ffffff59, 0 2px 6px #dc440c47; }
+  .play svg { width: 16px; height: 16px; }
+  .tc { font: 700 18px var(--sans); font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .tc small { font-weight: 400; color: var(--mute); font-size: 14px; }
+  .frameno { color: var(--mute); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .keys { color: var(--mute); font-size: 12px; }
+  .keys kbd { font: 11px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; margin: 0 2px; color: var(--body); background: var(--rail); }
+  label.loop { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--body); }
+  label.loop input { accent-color: var(--action); }
+  @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { display: none; } .keys { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 256 256" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB547"/><stop offset=".45" stop-color="#F98620"/><stop offset="1" stop-color="#D9400B"/></linearGradient></defs><rect width="256" height="256" rx="60" fill="url(#g)"/><path d="M98 76Q98 62 110 69L180 112Q192 120 180 128L110 171Q98 178 98 164Z" fill="#fff"/><circle cx="196" cy="70" r="15" fill="#fff"/></svg>
+      <b>Motion</b><span>Studio</span>
+    </div>
+    <label class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a7f8c" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="Search compositions" aria-label="Search compositions"><kbd>/</kbd></label>
+    <div class="list" id="list"></div>
+    <div class="foot"><span class="live off" id="live"></span><span id="status">Connecting…</span></div>
+  </aside>
+  <main>
+    <header>
+      <h1 id="title">–</h1>
+      <span class="chip" id="dims"></span>
+      <span class="chip" id="dur"></span>
+      <span class="spacer"></span>
+      <div class="dd" id="ddBg"></div>
+      <div class="dd" id="ddZoom"></div>
+    </header>
+    <div class="stage" id="stage"><div id="sizer" style="position:absolute;left:0;top:0;pointer-events:none"></div><iframe id="frame" class="frame loading" title="Composition"></iframe><div class="spinner" id="spin"></div><div class="err" id="err" hidden><b>Something needs fixing</b><pre id="errText"></pre></div></div>
+    <div class="transport">
+      <div class="track" id="track" aria-label="Timeline">
+        <div class="scenes" id="scenes"></div>
+        <div class="rail"></div><div class="fill" id="fill"></div><div class="head" id="head"></div>
+      </div>
+      <div class="controls">
+        <button class="play" id="play" title="Play / pause (Space)" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+        <button class="btn" id="start" title="First frame (Home)" aria-label="First frame"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+        <button class="btn" id="prev" title="Previous frame (←)" aria-label="Previous frame">‹</button>
+        <button class="btn" id="next" title="Next frame (→)" aria-label="Next frame">›</button>
+        <span class="tc" id="tc">0:00.00 <small>/ 0:00.00</small></span>
+        <span class="frameno" id="fno"></span>
+        <span class="spacer"></span>
+        <label class="loop"><input type="checkbox" id="loop"> Loop</label>
+        <div class="dd" id="ddSpeed"></div>
+        <span class="keys"><kbd>Space</kbd> play <kbd>←</kbd><kbd>→</kbd> frame <kbd>Shift</kbd> 1 s <kbd>0</kbd> fit</span>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const ENV = __ENV__;
+const $ = (s) => document.querySelector(s);
+const frame = $("#frame");
+let motion = null, comp = null, current = 0, playing = false, busy = false, want = null, zoom = "fit", list = [], segments = [];
+const PLAY = '<path d="M7 4.5v15l13-7.5z"/>', PAUSE = '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+
+/* Layout ---------------------------------------------------------- */
+function fit() {
+  if (!comp) return;
+  const box = $("#stage").getBoundingClientRect();
+  const s = zoom === "fit" ? Math.min((box.width - 64) / comp.width, (box.height - 64) / comp.height, 1) : Number(zoom);
+  frame.style.width = comp.width + "px";
+  frame.style.height = comp.height + "px";
+  frame.style.left = Math.max(32, (box.width - comp.width * s) / 2) + "px";
+  frame.style.top = Math.max(32, (box.height - comp.height * s) / 2) + "px";
+  frame.style.transform = `scale(${s})`;
+  // A zoomed frame larger than the stage scrolls: the sizer gives the stage its scroll area.
+  $("#sizer").style.width = comp.width * s + 64 + "px";
+  $("#sizer").style.height = comp.height * s + 64 + "px";
+  $("#dims").textContent = `${comp.width} × ${comp.height} · ${comp.fps} fps · ${Math.round(s * 100)}%`;
+}
+addEventListener("resize", fit);
+
+/* Dropdown: a button and a listbox, mouse and keyboard ------------ */
+const CHEVRON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>';
+const CHECK = '<svg class="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5 10 17 19 7"/></svg>';
+let openDd = null;
+function dropdown(root, { label, options, value, onChange, up = false }) {
+  const id = root.id + "-menu";
+  root.innerHTML = `<button class="dd-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="${id}"><span class="lbl">${label}</span><span class="val"></span>${CHEVRON}</button><ul class="dd-menu ${up ? "up" : "down"}" role="listbox" id="${id}" tabindex="-1" aria-label="${label}"></ul>`;
+  const btn = root.querySelector(".dd-btn"), menu = root.querySelector(".dd-menu");
+  let active = 0;
+  const items = options.map((o, i) => {
+    const li = document.createElement("li");
+    li.setAttribute("role", "option");
+    li.innerHTML = `${CHECK}${o.swatch ? `<span class="sw" style="background:${o.swatch}"></span>` : ""}<span></span>${o.hint ? `<span class="hint">${o.hint}</span>` : ""}`;
+    li.children[o.swatch ? 2 : 1].textContent = o.label;
+    li.onmouseenter = () => mark(i);
+    li.onclick = () => { pick(i); close(); btn.focus(); };
+    menu.append(li);
+    return li;
+  });
+  function mark(i) { active = (i + items.length) % items.length; items.forEach((li, k) => li.classList.toggle("active", k === active)); items[active].scrollIntoView({ block: "nearest" }); }
+  function pick(i, silent) {
+    value = options[i].value;
+    items.forEach((li, k) => li.setAttribute("aria-selected", String(k === i)));
+    root.querySelector(".val").textContent = options[i].short ?? options[i].label;
+    if (!silent) onChange(value);
+  }
+  function open() {
+    if (openDd && openDd !== api) openDd.close();
+    openDd = api;
+    root.classList.add("open");
+    btn.setAttribute("aria-expanded", "true");
+    mark(Math.max(0, options.findIndex((o) => o.value === value)));
+    menu.focus();
+  }
+  function close() { root.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); if (openDd === api) openDd = null; }
+  btn.onclick = () => (root.classList.contains("open") ? close() : open());
+  btn.onkeydown = (e) => { if (["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) { e.preventDefault(); open(); } };
+  menu.onkeydown = (e) => {
+    e.stopPropagation();
+    if (e.key === "ArrowDown") { e.preventDefault(); mark(active + 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); mark(active - 1); }
+    else if (e.key === "Home") { e.preventDefault(); mark(0); }
+    else if (e.key === "End") { e.preventDefault(); mark(items.length - 1); }
+    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(active); close(); btn.focus(); }
+    else if (e.key === "Escape" || e.key === "Tab") { close(); btn.focus(); }
+  };
+  const api = { close, set: (v) => { const i = options.findIndex((o) => o.value === v); if (i >= 0) pick(i, true); } };
+  pick(Math.max(0, options.findIndex((o) => o.value === value)), true);
+  return api;
+}
+document.addEventListener("pointerdown", (e) => { if (openDd && !e.target.closest(".dd.open")) openDd.close(); });
+
+const zoomDd = dropdown($("#ddZoom"), {
+  label: "Zoom",
+  value: store.get("motion.zoom") || "fit",
+  options: [{ value: "fit", label: "Fit to window", short: "Fit", hint: "0" }, ...[0.25, 0.5, 0.75, 1, 1.5, 2].map((z) => ({ value: String(z), label: `${z * 100}%`, hint: z === 1 ? "1" : "" }))],
+  onChange: (v) => { zoom = v; store.set("motion.zoom", v); fit(); },
+});
+zoom = store.get("motion.zoom") || "fit";
+
+let speed = Number(store.get("motion.speed") || 1);
+dropdown($("#ddSpeed"), {
+  label: "Speed",
+  up: true,
+  value: String(speed),
+  options: [0.25, 0.5, 1, 1.5, 2].map((s) => ({ value: String(s), label: `${s}×` })),
+  onChange: (v) => { speed = Number(v); store.set("motion.speed", v); if (playing) { stop(); play(); } },
+});
+
+const BACKGROUNDS = { dots: "", plain: "bg-plain", checker: "bg-checker", dark: "bg-dark" };
+function setBg(v) { $("#stage").className = "stage " + (BACKGROUNDS[v] ?? ""); }
+dropdown($("#ddBg"), {
+  label: "Stage",
+  value: store.get("motion.bg") || "dots",
+  options: [
+    { value: "dots", label: "Dot grid", short: "Dots", swatch: "radial-gradient(#d9d9e0 1px, #f7f7f8 1px) 0 0/5px 5px" },
+    { value: "plain", label: "Plain", swatch: "#f7f7f8" },
+    { value: "checker", label: "Checkerboard", short: "Checker", swatch: "repeating-conic-gradient(#d9d9e0 0% 25%, #fff 0% 50%) 0 0/7px 7px" },
+    { value: "dark", label: "Dark", swatch: "#16181d" },
+  ],
+  onChange: (v) => { store.set("motion.bg", v); setBg(v); },
+});
+setBg(store.get("motion.bg") || "dots");
+
+const clock = (f) => { const t = f / comp.fps; return `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, "0")}`; };
+
+/* Frames ---------------------------------------------------------- */
+function paintTransport(f) {
+  const p = comp.durationInFrames > 1 ? f / (comp.durationInFrames - 1) : 0;
+  $("#fill").style.width = `${p * 100}%`;
+  $("#head").style.left = `${p * 100}%`;
+  $("#tc").innerHTML = `${clock(f)} <small>/ ${clock(comp.durationInFrames - 1)}</small>`;
+  $("#fno").textContent = `frame ${f} of ${comp.durationInFrames - 1}`;
+  const t = f / comp.fps;
+  let k = -1;
+  segments.forEach((s, i) => { if (t >= s.start) k = i; });
+  [...$("#scenes").children].forEach((el, i) => el.classList.toggle("cur", i === k));
+}
+
+/** Shows frame f; while a frame is drawing, only the newest request waits. */
+async function show(f) {
+  if (!motion || !comp) return;
+  want = Math.max(0, Math.min(comp.durationInFrames - 1, Math.round(f)));
+  paintTransport(want);
+  if (busy) return;
+  busy = true;
+  while (want !== null) {
+    const g = want;
+    want = null;
+    try { await motion.seek(g); } catch (e) { showError(String(e)); }
+    current = g;
+  }
+  busy = false;
+}
+
+/* Timeline -------------------------------------------------------- */
+function drawScenes(timeline) {
+  segments = timeline?.segments ?? [];
+  const total = comp.durationInFrames / comp.fps;
+  $("#scenes").replaceChildren(...segments.map((s, i) => {
+    const end = segments[i + 1]?.start ?? total;
+    const d = document.createElement("div");
+    d.style.flex = `${Math.max(0.01, end - s.start)} 0 0`;
+    d.className = s.kind === "composition" ? "m" : "";
+    d.textContent = s.id;
+    d.title = `${s.id} · ${clock(Math.round(s.start * comp.fps))}`;
+    return d;
+  }));
+  $("#track").style.height = segments.length ? "34px" : "14px";
+}
+
+const track = $("#track");
+const frameAt = (x) => { const r = track.getBoundingClientRect(); return ((x - r.left) / r.width) * (comp.durationInFrames - 1); };
+track.addEventListener("pointerdown", (e) => {
+  if (!comp) return;
+  stop();
+  track.setPointerCapture(e.pointerId);
+  show(frameAt(e.clientX));
+  const move = (ev) => show(frameAt(ev.clientX));
+  track.addEventListener("pointermove", move);
+  track.addEventListener("pointerup", () => track.removeEventListener("pointermove", move), { once: true });
+});
+
+/* Playback -------------------------------------------------------- */
+function stop() {
+  playing = false;
+  $("#playIcon").innerHTML = PLAY;
+  $("#play").setAttribute("aria-label", "Play");
+}
+async function play() {
+  if (playing) return stop();
+  playing = true;
+  $("#playIcon").innerHTML = PAUSE;
+  $("#play").setAttribute("aria-label", "Pause");
+  // Real time: skip frames the machine cannot draw in time, never run slow.
+  let t0 = performance.now(), f0 = current >= comp.durationInFrames - 1 ? 0 : current;
+  while (playing) {
+    let f = f0 + Math.floor(((performance.now() - t0) / 1000) * comp.fps * speed);
+    if (f >= comp.durationInFrames) {
+      if (!$("#loop").checked) { await show(comp.durationInFrames - 1); stop(); break; }
+      t0 = performance.now(); f0 = 0; f = 0;
+    }
+    await show(f);
+    await new Promise(requestAnimationFrame);
+  }
+}
+
+$("#play").onclick = play;
+$("#start").onclick = () => { stop(); show(0); };
+$("#prev").onclick = () => { stop(); show(current - 1); };
+$("#next").onclick = () => { stop(); show(current + 1); };
+$("#loop").checked = store.get("motion.loop") === "1";
+$("#loop").onchange = (e) => store.set("motion.loop", e.target.checked ? "1" : "0");
+addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" && e.target.type !== "checkbox") {
+    if (e.key === "Escape") e.target.blur();
+    return;
+  }
+  if (e.key === "/") { e.preventDefault(); $("#q").focus(); return; }
+  if (!comp) return;
+  const step = e.shiftKey ? comp.fps : 1;
+  if (e.key === " ") { e.preventDefault(); play(); }
+  else if (e.key === "ArrowLeft") { stop(); show(current - step); }
+  else if (e.key === "ArrowRight") { stop(); show(current + step); }
+  else if (e.key === "Home") { stop(); show(0); }
+  else if (e.key === "End") { stop(); show(comp.durationInFrames - 1); }
+  else if (e.key === "0" || e.key === "1") { zoom = e.key === "0" ? "fit" : "1"; zoomDd.set(zoom); store.set("motion.zoom", zoom); fit(); }
+});
+
+/* Compositions ---------------------------------------------------- */
+// Group by name: "Film" and the brand pieces first, then families by their prefix.
+function groupOf(id) {
+  if (["Film", "LowerThird", "EndCard", "Avatar"].includes(id)) return "Film";
+  if (/^(Problem|Pipeline)$/.test(id)) return "Explainers";
+  const m = /^([A-Z][a-z]+|[A-Z]{2,}(?=[A-Z][a-z]))/.exec(id);
+  return m ? m[1] : "Other";
+}
+
+function renderList() {
+  const q = $("#q").value.trim().toLowerCase();
+  const hits = list.filter((c) => !q || c.id.toLowerCase().includes(q));
+  const groups = new Map();
+  for (const c of hits) {
+    const g = groupOf(c.id);
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(c);
+  }
+  const closed = new Set(JSON.parse(store.get("motion.closed") || "[]"));
+  $("#list").replaceChildren(...[...groups].map(([g, items]) => {
+    const box = document.createElement("div");
+    box.className = "group" + (!q && closed.has(g) && !items.some((c) => c.id === comp?.id) ? " closed" : "");
+    const h = document.createElement("h3");
+    h.innerHTML = `<span></span><span>${items.length}</span>`;
+    h.firstChild.textContent = g;
+    h.onclick = () => {
+      box.classList.toggle("closed");
+      box.classList.contains("closed") ? closed.add(g) : closed.delete(g);
+      store.set("motion.closed", JSON.stringify([...closed]));
+    };
+    const wrap = document.createElement("div");
+    wrap.className = "items";
+    for (const c of items) {
+      const b = document.createElement("button");
+      b.className = "item" + (c.id === comp?.id ? " on" : "");
+      b.dataset.id = c.id;
+      b.innerHTML = `<span class="dot"></span><span class="name"></span><small>${(c.durationInFrames / c.fps).toFixed(1)}s</small>`;
+      b.querySelector(".name").textContent = c.id;
+      b.onclick = () => open(c.id);
+      wrap.append(b);
+    }
+    box.append(h, wrap);
+    return box;
+  }));
+  if (!hits.length) $("#list").innerHTML = `<p style="padding:12px;color:var(--mute);font-size:13px">No composition matches.</p>`;
+}
+$("#q").oninput = renderList;
+$("#q").onkeydown = (e) => { if (e.key === "Enter") { const first = $("#list .item"); if (first) open(first.dataset.id); } };
+
+async function open(id) {
+  if (!id) return;
+  stop();
+  history.replaceState(null, "", "#" + encodeURIComponent(id));
+  $("#title").textContent = id;
+  $("#spin").hidden = false;
+  frame.classList.add("loading");
+  let props = {}, timeline = null;
+  if (id === "Film") {
+    timeline = await fetch("/__timeline").then((r) => r.json()).catch(() => null);
+    if (!timeline) showError("No staged timeline yet. Run compose for this project once, then reload.");
+    props = { timeline };
+  }
+  try {
+    comp = await motion.init(id, props);
+  } catch (e) {
+    showError(String(e));
+    return;
+  }
+  const entry = list.find((c) => c.id === id);
+  if (entry) entry.durationInFrames = comp.durationInFrames; // the real length, after metadata
+  $("#dur").textContent = `${(comp.durationInFrames / comp.fps).toFixed(2)} s · ${comp.durationInFrames} frames`;
+  renderList();
+  drawScenes(timeline);
+  fit();
+  await show(Math.min(current, comp.durationInFrames - 1));
+  frame.classList.remove("loading");
+  $("#spin").hidden = true;
+}
+
+function showError(text) {
+  $("#err").hidden = !text;
+  $("#errText").textContent = text || "";
+  if (text) { $("#spin").hidden = true; frame.classList.remove("loading"); }
+}
+
+async function load() {
+  showError("");
+  const at = current;
+  const ready = new Promise((r) => (frame.onload = r));
+  frame.src = `/index.html?page=studio&v=${Date.now()}#${encodeURIComponent(JSON.stringify(ENV))}`;
+  await ready;
+  const w = frame.contentWindow;
+  for (let i = 0; i < 100 && !w.__motion; i++) await new Promise((r) => setTimeout(r, 50));
+  if (!w.__motion) return showError("The scenes did not start. The build error is in the terminal.");
+  motion = w.__motion;
+  list = motion.list();
+  const hash = decodeURIComponent(location.hash.slice(1));
+  current = at;
+  await open(list.some((c) => c.id === hash) ? hash : (list.find((c) => c.id === "Film") ?? list[0])?.id);
+}
+
+/* Live reload ----------------------------------------------------- */
+const live = new EventSource("/__reload");
+live.addEventListener("hello", () => { $("#live").classList.remove("off"); $("#status").textContent = "Watching remotion/src"; });
+live.addEventListener("reload", () => { $("#status").textContent = `Rebuilt ${new Date().toLocaleTimeString()}`; load(); });
+live.addEventListener("error", (e) => {
+  if (e.data) showError(JSON.parse(e.data));
+  else { $("#live").classList.add("off"); $("#status").textContent = "Disconnected: is the studio still running?"; }
+});
+load();
+</script>
+</body>
+</html>
