@@ -20,7 +20,7 @@ film out of sync, because it is all placed on the same clock as the voice.
 ## How the film is built
 
 ```
-config + durations.json ──▶ work/timeline.json ──┬──▶ Remotion "Film" ──▶ work/film.mp4 (silent)
+config + durations.json ──▶ work/timeline.json ──┬──▶ Motion "Film"   ──▶ work/film.mp4 (silent)
                                                  └──▶ ffmpeg mix ──────▶ work/sound/mix.wav
                                                                   │
                                             master + poster ──▶ out/<name>.mp4 + .jpg
@@ -28,7 +28,7 @@ config + durations.json ──▶ work/timeline.json ──┬──▶ Remotion
 ```
 
 `scripts/lib/timeline.mjs` turns the config into one timeline. The whole
-picture is then a single Remotion composition (`remotion/src/film/Film.tsx`)
+picture is then a single composition, rendered by AiEmcee Motion (`remotion/src/film/Film.tsx`)
 that places product footage, motion scenes, transitions, titles and focus
 moves on that timeline. The sound is mixed by ffmpeg from the *same* file, by
 absolute time. Picture and sound come from one set of numbers, so they cannot
@@ -204,6 +204,8 @@ avatar: { enabled: true, size: 124, captions: true },
 
 Moods are `neutral`, `happy`, `curious` and `focused`. They change the eyes,
 and blend into each other between scenes.
+
+![The avatar's four moods, on the host backdrop and on the page colour](media/avatar-moods.jpg)
 
 **It speaks with the voice.** Its level on every frame comes from the
 narration audio itself: the orb wobbles and squashes as it talks, and rings

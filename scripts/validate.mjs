@@ -12,7 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { at, loadConfig } from "./lib/config.mjs";
+import { assetAt, at, engineAt, loadConfig } from "./lib/config.mjs";
 import { AVATAR_MODES, AVATAR_MOODS, avatarFor, normaliseTransition, resolveTone, TRANSITIONS } from "./lib/timeline.mjs";
 
 const problems = [];
@@ -62,6 +62,9 @@ for (const scene of config.sequence) {
     if (scene.clip?.end != null && scene.clip.end <= (scene.clip.start ?? 0)) {
       problems.push(`"${scene.id}" clip.end must be after clip.start`);
     }
+  } else if (scene.from === "still") {
+    if (!scene.still?.src) problems.push(`"${scene.id}" is a still scene with no still.src`);
+    else if (!fs.existsSync(at(scene.still.src))) problems.push(`"${scene.id}" still image not found: ${scene.still.src}`);
   } else {
     problems.push(`"${scene.id}" has an unknown \`from\`: ${JSON.stringify(scene.from)}`);
   }
@@ -72,14 +75,19 @@ for (const id of Object.keys(SCENES)) {
 }
 
 /* Motion scenes are looked up by the Film in the scenes.ts registry. */
-const registry = fs.readFileSync(at("remotion", "src", "scenes.ts"), "utf8");
+// The engine's registry plus your own (src/local.tsx, private, when present).
+const registry = ["scenes.ts", ...(process.env.AIEMCEE_LOCAL === "off" ? [] : ["local.tsx"])]
+  .map((f) => engineAt("remotion", "src", f))
+  .filter((f) => fs.existsSync(f))
+  .map((f) => fs.readFileSync(f, "utf8"))
+  .join("\n");
 const registered = new Set([...registry.matchAll(/^\s+(\w+): \{ component:/gm)].map((m) => m[1]));
 
 const needed = new Set(config.sequence.filter((s) => s.from === "motion").map((s) => s.composition));
 if (config.outro && !config.outro.src) needed.add(config.outro.composition);
 
 for (const id of needed) {
-  if (id && !registered.has(id)) problems.push(`motion scene "${id}" is not in the MOTION registry in remotion/src/scenes.ts`);
+  if (id && !registered.has(id)) problems.push(`motion scene "${id}" is not in the MOTION registry (remotion/src/scenes.ts, or your remotion/src/local.tsx)`);
 }
 
 /* Direction: tone, transitions, focus moves. */
@@ -174,7 +182,7 @@ if (music && !music.src && music.generate !== "pad") problems.push('sound.music 
 if (tone && config.sound?.sfx !== false) {
   for (const name of new Set(Object.values(tone.sfx).filter(Boolean))) {
     if (name === "whoosh") continue;
-    const found = [".ogg", ".wav", ".mp3"].some((ext) => fs.existsSync(at(config.paths.assets, "sfx", `${name}${ext}`)));
+    const found = [".ogg", ".wav", ".mp3"].some((ext) => fs.existsSync(assetAt(config.paths.assets, "sfx", `${name}${ext}`)));
     if (!found) problems.push(`sound effect "${name}" (tone ${tone.name}) not found in ${config.paths.assets}/sfx/`);
   }
 }

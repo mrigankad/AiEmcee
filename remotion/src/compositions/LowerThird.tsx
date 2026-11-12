@@ -12,7 +12,7 @@ import { Easing, interpolate, spring, staticFile, useCurrentFrame, useVideoConfi
 
 import { Page } from "../components/Motion";
 import { useTone } from "../film/tone";
-import { brandAlpha, theme } from "../theme";
+import { brandAlpha, overlay, theme } from "../theme";
 import { fontDisplay, fontSans } from "../fonts";
 
 export type LowerThirdProps = {
@@ -61,8 +61,8 @@ export function LowerThird({ kicker, title }: LowerThirdProps) {
 
         <div
           style={{
-            background: "rgba(255,255,255,0.95)",
-            border: `1px solid ${theme.muted}`,
+            background: overlay.bg,
+            border: `1px solid ${overlay.border}`,
             borderLeft: "none",
             borderRadius: "0 14px 14px 0",
             padding: "13px 24px 14px 16px",
@@ -74,10 +74,10 @@ export function LowerThird({ kicker, title }: LowerThirdProps) {
           }}
         >
           <img
-            src={staticFile("mark.svg")}
+            src={staticFile(overlay.mark)}
             alt=""
-            width={36}
-            height={36}
+            width={36 * overlay.scale}
+            height={36 * overlay.scale}
             style={{
               borderRadius: 9,
               flexShrink: 0,
@@ -92,10 +92,10 @@ export function LowerThird({ kicker, title }: LowerThirdProps) {
                 alignItems: "center",
                 gap: 8,
                 fontFamily: fontDisplay,
-                fontSize: 11,
+                fontSize: 11 * overlay.scale,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: theme.brandDeep,
+                color: overlay.kicker,
                 opacity: kickerIn,
                 transform: `translateY(${(1 - kickerIn) * 12}px)`,
               }}
@@ -116,10 +116,10 @@ export function LowerThird({ kicker, title }: LowerThirdProps) {
               style={{
                 marginTop: 6,
                 fontFamily: fontSans,
-                fontSize: 24,
+                fontSize: 24 * overlay.scale,
                 fontWeight: 600,
                 letterSpacing: -0.4,
-                color: theme.text,
+                color: overlay.text,
                 opacity: titleIn,
                 transform: `translateY(${(1 - titleIn) * 18}px)`,
               }}

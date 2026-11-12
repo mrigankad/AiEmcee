@@ -1,6 +1,6 @@
 /**
  * Builds the film's timeline: one JSON document that both the picture (the
- * Remotion `Film` composition) and the sound (scripts/lib/mix.mjs) are cut
+ * `Film` composition, drawn by AiEmcee Motion) and the sound (scripts/lib/sound.mjs) are cut
  * from.
  *
  * This is the metronome rule, kept intact. Every scene still owns exactly
@@ -15,12 +15,12 @@
  */
 import fs from "node:fs";
 
-import { at } from "./config.mjs";
+import { assetAt, at, engineAt } from "./config.mjs";
 import { probe } from "./ffmpeg.mjs";
 import { spokenText } from "./delivery.mjs";
 import { envelope, fallbackCues, readSrt, timeWords } from "./voice.mjs";
 
-export const TONES = JSON.parse(fs.readFileSync(at("remotion", "src", "film", "tones.json"), "utf8"));
+export const TONES = JSON.parse(fs.readFileSync(engineAt("remotion", "src", "film", "tones.json"), "utf8"));
 delete TONES.$comment;
 
 export const TRANSITIONS = ["cut", "fade", "dip", "zoom", "push", "wipe"];
@@ -35,7 +35,7 @@ export const AVATAR_MOODS = ["neutral", "happy", "curious", "focused"];
  */
 export function avatarFor(entry) {
   const value = entry.avatar;
-  const mode = typeof value === "string" ? value : value?.mode ?? (entry.from === "motion" ? "off" : "corner");
+  const mode = typeof value === "string" ? value : value?.mode ?? (entry.from === "motion" || entry.from === "still" ? "off" : "corner");
   const mood = (typeof value === "object" && value?.mood) || (mode === "host" ? "happy" : "neutral");
   return { mode, mood };
 }
@@ -73,16 +73,21 @@ export function normaliseTransition(value, fallback) {
 /** Where a sequence entry's footage lives on disk. Motion scenes have none. */
 export function footageFor(config, entry) {
   if (entry.from === "clip") return at(config.paths.raw, `${entry.id}.mp4`);
-  if (entry.from === "capture") return at(config.paths.raw, `${entry.id}.webm`);
+  if (entry.from === "capture") {
+    // screencast mode writes .mp4, recordVideo mode .webm; capture removes the other.
+    const mp4 = at(config.paths.raw, `${entry.id}.mp4`);
+    return fs.existsSync(mp4) ? mp4 : at(config.paths.raw, `${entry.id}.webm`);
+  }
   return null;
 }
 
 /**
  * @returns {{ timeline: object, media: Array<{ from: string, to: string }> }}
- *   `timeline` is written for Remotion to read; `media` lists every file the
- *   film needs staged into remotion/public, by its published name.
+ *   `timeline` is written for the motion engine to read; `media` lists every file the
+ *   film needs staged into remotion/public, by its published name, under
+ *   `base` (film/ for the root film, projects/<name>/ for a project).
  */
-export function buildTimeline(config, durations, narrationById = new Map()) {
+export function buildTimeline(config, durations, narrationById = new Map(), { base = "film" } = {}) {
   const tone = resolveTone(config);
   const { gap, introTail, endHold, fadeIn, fadeOut } = config.timing;
   const ltHold = tone.lowerThird.hold;
@@ -100,8 +105,8 @@ export function buildTimeline(config, durations, narrationById = new Map()) {
   };
 
   const stage = (src, name) => {
-    media.push({ from: src, to: `film/media/${name}` });
-    return `film/media/${name}`;
+    media.push({ from: src, to: `${base}/media/${name}` });
+    return `${base}/media/${name}`;
   };
 
   /* Intro sting: plays with its own audio, then a beat of held frame. */
@@ -154,6 +159,14 @@ export function buildTimeline(config, durations, narrationById = new Map()) {
     if (entry.from === "motion") {
       segment.kind = "motion";
       segment.composition = entry.composition;
+    } else if (entry.from === "still") {
+      const file = at(entry.still?.src ?? "");
+      if (!entry.still?.src || !fs.existsSync(file)) throw new Error(`missing still image for ${entry.id}: ${entry.still?.src}`);
+      segment.kind = "still";
+      segment.src = stage(file, `${entry.id}${extOf(file)}`);
+      segment.move = stillMove(entry.still);
+      // The camera is the image's own move; no footage push or focus applies.
+      segment.focus = [];
     } else {
       const file = footageFor(config, entry);
       if (!fs.existsSync(file)) {
@@ -266,6 +279,16 @@ function buildAvatar(config, narration, narrationById, total) {
     envelope: env,
     cues,
   };
+}
+
+/**
+ * A still scene's camera move. Defaults to a gentle 6% push into the centre.
+ *   still: { src, zoom: [1, 1.06], pan: [[0.5, 0.5], [0.52, 0.48]], ease: "inOut" | "linear" }
+ */
+export function stillMove(still = {}) {
+  const zoom = still.zoom ?? [1, 1.06];
+  const pan = still.pan ?? [[0.5, 0.5], [0.5, 0.5]];
+  return { zoom: [zoom[0], zoom[1]], pan: [[...pan[0]], [...pan[1]]], ease: still.ease === "linear" ? "linear" : "inOut" };
 }
 
 function extOf(file) {

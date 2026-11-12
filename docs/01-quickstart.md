@@ -12,7 +12,7 @@ npm run setup
 npm run doctor
 ```
 
-`npm run setup` installs the pipeline's dependencies, Remotion's dependencies,
+`npm run setup` installs the pipeline's dependencies, the motion engine's dependencies,
 and the Chromium build Playwright drives. `npm run doctor` then verifies every
 external tool and prints the exact fix for anything missing:
 
@@ -132,7 +132,7 @@ sequence: [
 ```
 
 - `from: "capture"` — recorded from your app, needs a function in `scenes.mjs`
-- `from: "motion"` — rendered by Remotion from `composition`
+- `from: "motion"` — rendered by the motion engine from `composition`
 - `lowerThird` — an animated title card, composited over the scene
 
 Every `id` must exist in `narration.json`. If it does not, the pipeline fails
@@ -160,7 +160,7 @@ the timing method.
 
 ```bash
 npm run capture    # Playwright: your app
-npm run compose    # Remotion + ffmpeg: the finished, directed film
+npm run compose    # AiEmcee Motion + ffmpeg: the finished, directed film
 ```
 
 `compose` prints a drift line. It should be under a few milliseconds:

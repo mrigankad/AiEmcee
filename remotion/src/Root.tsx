@@ -11,6 +11,7 @@
  */
 import React from "react";
 import { Composition, staticFile } from "remotion";
+import { LocalCompositions } from "@local";
 
 import { AvatarPreview } from "./avatar/AvatarPreview";
 import { EndCard } from "./compositions/EndCard";
@@ -64,6 +65,9 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="EndCard" component={EndCard} durationInFrames={sec(3.9)} {...frame} defaultProps={endCardProps} />
 
       <Composition id="Avatar" component={AvatarPreview} durationInFrames={sec(8)} {...frame} />
+
+      {/* Your own scenes, from src/local.tsx */}
+      <LocalCompositions />
 
       <Composition
         id="LowerThird"

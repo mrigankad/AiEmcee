@@ -1,6 +1,6 @@
 # 05 · Motion graphics
 
-Remotion renders React components to video, frame by frame, in headless
+AiEmcee Motion renders React components to video, frame by frame, in headless
 Chromium. If you can build it in a browser, you can render it as a scene.
 
 ## When to use a motion scene instead of capture
@@ -29,7 +29,7 @@ its copy in `remotion/src/scenes.ts` — no component changes at all.
 
 ## Frames, not seconds
 
-Remotion counts frames. At 30fps, second 4 is frame 120. `theme.ts` exports a
+The motion engine counts frames. At 30fps, second 4 is frame 120. `theme.ts` exports a
 helper so composition lengths read in the same unit as narration:
 
 ```ts
@@ -139,11 +139,10 @@ as responsive. One that lands 0.2s late reads as broken.
 npm run studio
 ```
 
-Remotion Studio opens with a scrubbable timeline and hot reload. This is the
+Motion Studio opens at http://127.0.0.1:3123 with a composition list, a
+scrubber, play and frame step, and a live rebuild on save. This is the
 only sane way to time a composition — scrub to the frame, adjust, watch it
 update.
-
-Props are editable in the sidebar, so you can try copy without editing files.
 
 ## Adding a composition
 
@@ -257,8 +256,8 @@ Keep focus moves clear of it (see [10 Direction](10-direction.md)).
 
 ## Gotchas
 
-**Fonts must be bundled, not linked.** `fonts.ts` loads through
-`@remotion/google-fonts` for a reason: the renderer screenshots frames
+**Fonts must be bundled, not linked.** `fonts.ts` imports local
+woff2 files from `@fontsource` packages for a reason: the renderer screenshots frames
 headlessly and will happily capture a frame before a network font has arrived.
 
 **No CSS transitions.** Each frame is rendered independently, so a transition
@@ -266,14 +265,13 @@ has nothing to transition from. Drive everything from `frame`.
 
 **No `Date.now()`, no `Math.random()`.** Frames must be deterministic — the
 same frame number must always produce the same image, or the render flickers.
-Use `useCurrentFrame()`, and Remotion's `random()` if you need noise.
+Use `useCurrentFrame()`, and derive any noise deterministically from the frame.
 
 **Absolute positioning inside a padded flex parent.** `Pipeline`'s rail is
 positioned at `top: 27` relative to the steps row. Adding padding to that row
 moves the nodes but not the rail. Adjust both, or use margins.
 
-**Renders are slow-ish.** One to four minutes for a few scenes at 1600×900. Use
-Studio to iterate, and render only at the end.
+**Iterate in Studio.** Use Studio to iterate, and render only at the end.
 
 ## Next
 

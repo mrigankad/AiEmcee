@@ -35,7 +35,7 @@ the next:
 1. script          →  narration.json          →  npm run narrate   → listen
 2. sequence        →  video.config.mjs        →  npm run doctor
 3. choreography    →  scenes.mjs              →  npm run capture   → watch
-4. motion + brand  →  Remotion, tokens        →  npm run motion    → check a frame
+4. motion + brand  →  compositions, tokens    →  npm run motion    → check a frame
 ```
 
 Each stage feeds the next. Getting the script right first is not optional —

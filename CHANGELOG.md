@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-12
+
+### Added
+
+- **AiEmcee Motion**, our own motion engine, replacing Remotion
+  ([docs/14-motion-engine.md](docs/14-motion-engine.md)).
+  - A runtime for the scene API (`remotion/engine/runtime.tsx`); scenes are
+    unchanged. Its spring, interpolate and easing output matches Remotion
+    4.0.518 bit for bit (60,003 values, `npm --prefix remotion test`).
+  - An esbuild bundle (0.3 s, was 13 s with webpack), a renderer on headless
+    Chromium, and a frame server that decodes footage at the size each frame
+    shows.
+  - The smoke film's fast render: 31.8 s, was 260.6 s. The default (master)
+    render is chunked and cached too.
+- **`compose --preview <scene>`**: one scene and its sound, drafted in about
+  two seconds.
+- **Motion Studio** (`npm run studio`): preview every composition; search,
+  scrub, play, step, zoom, loop, speed; rebuilds on save.
+- **AiEmcee Studio**: a studio server (`npm run web`) and a Next.js app in
+  `web/`. Films, a scene editor, script, review with pinned comments and
+  approvals, versions with diff and undo, share pages with chapters, captions,
+  a call to action, lead capture and per-scene retention, a job queue, and
+  users with roles. **Rasa**, a director in chat (Claude, OpenAI, Grok).
+- **Your own scenes stay private**: per-film compositions register in
+  `remotion/src/local.tsx` (git-ignored; see `local.example.tsx`).
+
+### Changed
+
+- **License: Apache 2.0** with a NOTICE file, in place of MIT. Releases up to
+  1.1.0 remain MIT.
+- Narration synthesises sentences and lines in parallel; capture assembles
+  scenes while the next one records; the sound mix runs beside the picture.
+- New captures put a keyframe every second, for fast seeking.
+- The default `intro` is none (it named a sting that is not shipped).
+- `render` defaults drop the Remotion-only `codec` and `concurrency`; `render.gl`
+  now means hardware by default, `"software"` for SwiftShader.
+
+### Fixed
+
+- Studio server: cross-site requests can no longer drive a local studio (Host
+  and Origin checks, JSON-only changes); project names cannot leave the
+  projects folder; uploads are served sandboxed; malformed Range headers get
+  416; a failed or deleted job no longer stalls the queue; cancel ends the
+  whole process group on macOS and Linux.
+- Frame server: two overlapping requests on one decoder (a page mounts on
+  frame 0, then seeks) could leave one waiting forever and stall a render;
+  requests are now served one at a time per decoder. Idle decoders release
+  their file, so compose can restage footage while Motion Studio is open
+  (it failed with EBUSY on Windows).
+- Motion Studio served its bundle with a one-hour cache, so a rebuilt scene
+  could show stale.
+- `init` no longer copies a maintainer's private scenes or art, pins the same
+  Playwright as the engine, and names the right stages.
+- Spring maths is memoised: 3,600 frames × 30 springs went from 6.6 s to
+  46 ms of CPU, results unchanged. Version diffs match shared lines first, so
+  large files with small edits diff in milliseconds.
+
 ## [1.1.0] — 2026-09-27
 
 ### Added
@@ -176,6 +233,7 @@ with its script, durations and choreography annotated.
 - No generated media is committed. `raw/`, `tts/`, `work/`, `out/` and
   `remotion/out/` all rebuild from source.
 
-[Unreleased]: https://github.com/mrigankad/AiEmcee/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/mrigankad/AiEmcee/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/mrigankad/AiEmcee/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/mrigankad/AiEmcee/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mrigankad/AiEmcee/releases/tag/v1.0.0

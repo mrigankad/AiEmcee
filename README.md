@@ -4,255 +4,193 @@
 
 **Narrated product demo videos, generated end to end from a text file.**
 
-You write the script. Everything else — the voiceover, the screen recording,
-the motion graphics, the titles, the transitions, the AI presenter, the sound
-design, the cut — is produced by running a handful of commands.
-
-No editor. No timeline. No manual sync.
-
-<sub>*Emcee, as in master of ceremonies: the thing that narrates the show.*</sub>
-
-<br>
+Write the script. AiEmcee records your product, voices the narration, animates
+the explainers, directs the camera, scores it, and cuts the film.
+No editor, no timeline, no manual sync.
 
 [![CI](https://github.com/mrigankad/AiEmcee/actions/workflows/ci.yml/badge.svg)](https://github.com/mrigankad/AiEmcee/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/mrigankad/AiEmcee?label=release)](https://github.com/mrigankad/AiEmcee/releases)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)](https://nodejs.org)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Engine](https://img.shields.io/badge/engine-AiEmcee%20Motion-F0731A)](docs/14-motion-engine.md)
 
-<br>
+![A 17-second excerpt of a film made with AiEmcee](docs/media/preview.gif)
 
-[Quickstart](docs/01-quickstart.md) ·
-[Architecture](docs/02-architecture.md) ·
-[Prompt library](docs/prompts/) ·
-[Changelog](CHANGELOG.md) ·
-[Troubleshooting](docs/09-troubleshooting.md)
+<sub>An excerpt from a real film built with this repo. No frame was edited by hand.</sub>
 
-<br>
-
-![A rendered explainer scene](docs/media/scene-problem.jpg)
-
-<sub>Every frame below was produced by this repo. Nothing was touched by hand.</sub>
+[Capabilities](#capabilities) · [Quickstart](#quickstart) · [How it works](#how-it-works) · [The studio](#the-studio) · [Motion engine](#the-motion-engine) · [Commands](#commands) · [Docs](#documentation)
 
 </div>
 
 ---
 
-## What it does
-
-```
-narration.json ──▶ edge-tts, directed ──▶ tts/*.mp3 + durations.json
-                                                  │
-                   ┌──────────────────────────────┤
-                   ▼                              ▼
-       Playwright drives your app      timeline: every scene, transition,
-       scenes.mjs ──▶ raw/*.webm       title, focus move and sound cue
-       (or clip.mjs cuts a recording)  on the narration's clock
-                   │                              │
-                   └──────────────┬───────────────┘
-                                  ▼
-              Remotion renders the film  +  ffmpeg mixes the sound
-                                  ▼
-                 out/demo.mp4  +  poster  +  review stills
-```
-
-The video is a build artifact. When the product changes, you re-run the build
-and get a new video — you do not re-edit anything.
-
-```bash
-npm run setup     # once
-npm run build     # narrate → clip → capture → compose
-```
-
----
-
-## The idea that makes it work
-
-**Audio is the metronome.**
-
-Every normal video workflow does this backwards: record the picture, then fight
-to fit a voiceover to it. That fight is the reason video editing is manual
-work.
-
-This inverts it.
-
-1. Each narration line is synthesised first.
-2. `ffprobe` measures its exact duration.
-3. Those numbers go into `tts/durations.json`.
-4. **Everything downstream cuts to them.** The recorder holds each scene until
-   it outlasts its line. The compositor gives every scene exactly
-   `narration + gap` on one timeline, then renders the picture and mixes the
-   sound from that same timeline. Transitions, titles, camera moves, the
-   avatar and the sound effects are all placed on it too.
-
-Two timelines generated from one set of numbers cannot drift. That is the whole
-trick, and it is why there is no sync step anywhere in this repo.
-
-```
-video    112.37s
-audio    112.38s
-drift    0.008s     ← printed on every build
-```
-
----
-
-## What comes out
+## What you get
 
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-**Recorded product footage** — a real browser driving your real app, with a
-virtual cursor that eases between targets and ripples on click. It reads as a
-person, not as automation.
+**Your real product, on camera.** Playwright drives your app with a virtual
+cursor that eases and clicks like a person, or AiEmcee cuts scenes out of a
+recording you already have.
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-**Designed motion scenes** — for the parts of the story that are an argument
-rather than a UI. Nobody needs to watch a slow scroll past marketing copy to be
-told that testing is expensive.
+**Designed explainers** for the parts that are an argument, not a UI:
+headlines that set word by word, claims that land one at a time.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+![The avatar hosting the opening line](docs/media/avatar-host.jpg)
+
+**An AI presenter** that speaks the narration, moving with the voice, and
+shows it as word-by-word captions. It hosts the opening and the close, then
+presents the product from the corner.
+
+</td>
+<td valign="top">
+
+![A brand wipe between two scenes](docs/media/transition-wipe.jpg)
+
+**A directed edit.** Transitions between every scene, and camera moves that
+zoom in on the part of the UI that matters, dim the rest and name it.
 
 </td>
 </tr>
 </table>
 
-![The pipeline explainer scene](docs/media/scene-pipeline.jpg)
+And the finishing touches, all automatic:
 
-**Animated lower thirds**, drawn live over the footage: the brand bar grows,
-the card unrolls, the words rise in.
+- **A directed voice.** Free neural TTS, spoken a sentence at a time with
+  pace and pitch set by what each line is for (`hook`, `problem`, `feature`,
+  `payoff`…), with deliberate pauses and a mastering chain.
+- **Sound design.** A music bed that ducks under the voice, effects cued from
+  the edit, and the master levelled to -16 LUFS for every platform.
+- **Five tones**: `polished`, `default`, `cinematic`, `app-store`,
+  `deadpan`. One setting changes transitions, camera, grade, motion and sound
+  together.
+- **Ready to post.** The best frame is baked in as the thumbnail, and a
+  contact sheet of every scene, transition and title is written for review.
+- **A studio for the team.** Direct a film in chat with Rasa, preview one
+  scene in two seconds, review with comments pinned to frames, approve, and
+  share a link with chapters, captions and a lead form.
 
-![A lower third composited over a scene](docs/media/lower-third.jpg)
+<table>
+<tr>
+<td width="33%" valign="top">
 
-**An end card**, held silent so the last narrated line has room to land.
+![A problem explainer](docs/media/scene-problem.jpg)
+
+**Explainers** set the argument word by word.
+
+</td>
+<td width="33%" valign="top">
+
+![A pipeline explainer](docs/media/scene-pipeline.jpg)
+
+**Diagrams** that build step by step, timed to the voice.
+
+</td>
+<td width="33%" valign="top">
+
+![A lower third over product footage](docs/media/lower-third.jpg)
+
+**Titles** that name each scene as it starts.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+![The presenter's moods](docs/media/avatar-moods.jpg)
+
+**Moods** for the presenter, set per scene.
+
+</td>
+<td valign="top">
 
 ![The end card](docs/media/scene-endcard.jpg)
 
-**An AI presenter** that speaks the narration and shows it as word-by-word
-captions: hosting the opening and closing full screen, then presenting the
-product from the corner.
+**An end card** with your mark and the call to action.
 
-![The Wayam avatar hosting the opening line](docs/media/avatar-host.jpg)
+</td>
+<td valign="top">
 
-**Transitions between every scene**, like this brand wipe into the explainer
-that matters most.
+![Motion Studio](docs/media/motion-studio.jpg)
 
-![A brand wipe between two motion scenes](docs/media/transition-wipe.jpg)
+**Motion Studio** to preview any scene, frame by frame.
 
----
-
-## Direction
-
-A correct film is not automatically a good one. On top of the metronome,
-every film is **directed**, with the craft of [/brag](https://github.com/latent-spaces/brag)
-applied to long-form demos:
-
-- **Transitions** between scenes, placed in the silent gap between lines so
-  the voice always lands on a settled picture.
-- **Focus moves** inside product footage. The camera eases in on the part of
-  the UI that matters, dims the rest and names it. A screen recording stops
-  asking the viewer to find the point on their own.
-- **A tone**: `polished`, `default`, `cinematic`, `app-store` or `deadpan`.
-  It sets transitions, camera, grade, motion springs and sound cues together.
-- **A directed voice**: each line is spoken a sentence at a time, with pace
-  and pitch from its intent (`hook`, `problem`, `feature`, `payoff`, …),
-  deliberate pauses and `[beat]`s, and a mastering chain, so free TTS stops
-  sounding flat. `npm run narrate -- --audition` compares voices by ear.
-- **Sound design**: a music bed that ducks under the narration, effects cued
-  from the edit, and the master normalised to -16 LUFS.
-- **An AI presenter**: the Wayam orb, which speaks the narration (it moves
-  with the voice) and shows it as word-by-word captions. It hosts openings and
-  closings full screen, and presents product scenes from the corner. Four
-  moods, blended between scenes; it steps aside for focus moves.
-- **A poster frame** baked in as frame 0, and a **contact sheet** of every
-  scene, transition, title and focus move to review before anyone watches.
-
-```js
-{
-  id: "05-pdi",
-  from: "clip",
-  clip: { src: DEMO, start: 56.8, end: 70.35 },
-  focus: [
-    { at: 10.8, until: 12.8, box: [0.76, 0.87, 0.15, 0.06], label: "18,705 modules in one lot" },
-  ],
-},
-```
-
-![The avatar's moods: neutral, happy, curious, focused](docs/media/avatar-moods.jpg)
-
-Or let Claude do it: run **`/emcee`** in this repo. It inspects the footage,
-places the focus moves, builds, reviews the stills and fixes what is wrong.
-See **[docs/10-direction.md](docs/10-direction.md)**.
+</td>
+</tr>
+</table>
 
 ---
 
-## Why it is built this way
+## Capabilities
 
-**Screen capture for the product, motion graphics for the argument.**
-Record the UI when the point is *look what it does*. Render a designed frame
-when the point is *here is why this matters*.
+Everything in AiEmcee is built here: the timeline, the voice direction, the
+capture pipeline, the renderer and the studio.
 
-**One scene, one browser context.** Each scene records to its own file. A scene
-that goes wrong is re-recorded on its own in twenty seconds, instead of forcing
-a full re-run — and a crash in scene nine does not cost you scenes one through
-eight.
-
-**Record against a production build.** A dev server can render an error
-overlay, a hydration warning or a hot-reload toast at any moment, and there is
-no way to remove that from footage afterwards.
-
-**No generated media is committed.** Clone, `npm run build`, get the video.
-The only binaries in the repo are a handful of small CC0 sound effects.
-
----
-
-## Requirements
-
-| Tool | Why | Install |
-| --- | --- | --- |
-| Node 20+ | runs the pipeline | [nodejs.org](https://nodejs.org) |
-| ffmpeg + ffprobe | cuts clips, mixes and masters the sound, muxes | `winget install Gyan.FFmpeg` · `brew install ffmpeg` · `apt install ffmpeg` |
-| edge-tts | the voiceover — free, no API key | `pip install edge-tts` |
-| Chromium | drives your app | installed by `npm run setup` |
-
-```bash
-npm run doctor
-```
-
-Checks all of them and prints the fix next to anything missing.
-
-```
-  ok  node >= 20              v22.17.0
-  ok  ffmpeg                  8.0.1
-  ok  ffprobe                 8.0.1
-  ok  edge-tts                7.2.7
-  ok  playwright chromium     installed
-  ok  remotion dependencies   installed
-  ok  project config          6 narration lines, 4 captured + 2 motion scenes
-
-All good. Run `npm run build`.
-```
+| Area | What it does |
+| --- | --- |
+| **Script** | One JSON file, one line per scene. Each line carries a delivery (`hook`, `problem`, `feature`, `payoff`…) and inline pauses (`[beat]`). |
+| **Voice** | Neural TTS spoken a sentence at a time, sentences in parallel; pace and pitch per delivery; a mastering chain. Line lengths become the film's clock. |
+| **Capture** | Playwright drives your real app with an eased, human cursor at 2x (3840×2160) into a lossless 60 fps intermediate. Or cut scenes from a recording you already have. |
+| **Direction** | Five tones; transitions between every scene; focus moves that zoom, dim and label part of the UI; a presenter with moods and captions; a music bed and cued effects levelled to -16 LUFS. |
+| **Motion engine** | AiEmcee Motion: the scenes are React; frames are drawn in headless Chromium, footage is decoded at the size each frame shows, and the film renders in cached, parallel chunks. 8× faster than the engine it replaced. |
+| **Profiles** | Master (PNG, crf 12), fast (JPEG, veryfast), draft (720p), a one-scene preview in about two seconds, and a 4K master. |
+| **Review** | A poster frame, a contact sheet of every scene, transition and title, and frame-accurate drift checks on every build. |
+| **Studio** | A web app for the team: films, a scene editor, script, review with pinned comments and approvals, versions with diff and undo, share links with analytics and lead capture, renders and roles. |
+| **Rasa** | A director in chat that edits the project and renders the change, with Claude, OpenAI or Grok. Paste a screenshot to show what you mean; undo any turn. |
+| **Agents** | `/emcee`, a Claude Code skill that directs a film end to end, and prompts for every stage. |
+| **Scale** | `batch` renders many films and skips the ones already up to date. |
 
 ---
 
 ## Quickstart
 
-**Scaffold a project** — the usual way. Creates a standalone project with no
-runtime link back to this package, so upgrading the CLI never breaks a video
-you already made.
+You need Node 20+, [ffmpeg](https://ffmpeg.org/download.html) and
+`pip install edge-tts`. Your app should be running in production mode on the
+URL in the project's `video.config.mjs`; a dev server can flash an error
+overlay into the footage at any moment.
+
+### Many films, one engine (this repo)
+
+Each film is a folder of data under `projects/`. The scripts, the scenes
+(`remotion/src`), the motion engine and the shared assets at the repo root are
+the engine.
+
+```bash
+npm run setup                                   # once: pinned deps + Chromium
+cp -r projects/_template projects/my-film       # then edit its files
+npm run doctor -- --project projects/my-film    # toolchain + project check
+npm run film   -- --project projects/my-film    # narrate → clip → capture → compose
+```
+
+A project needs only `video.config.mjs`, `narration.json`, `scenes.mjs`,
+optional `design.tokens.json`, `assets/` and `PROMPTS.md`; `tts/ raw/ work/
+out/` are generated and git-ignored. Footage is captured at 2x (3840x2160) and
+the film renders at 1080p60: see **[docs/11-quality.md](docs/11-quality.md)**.
+
+The older layout, one film at the repo root (`video.config.mjs` there), still
+builds when you leave out `--project`.
+
+### A standalone project
 
 ```bash
 npx @mrigankad/aiemcee init my-video
 cd my-video
-
-npm run setup       # node deps, remotion deps, Chromium
-npm run doctor      # verify the toolchain
-
-# start YOUR app in production mode, on the port in video.config.mjs
-npm run build
+npm run setup      # node deps, the scenes' deps, Chromium
+npm run doctor     # checks ffmpeg, edge-tts and the rest, with a fix for anything missing
+npm run build      # narrate → clip → capture → compose  →  out/demo.mp4
 ```
 
 <details>
-<summary>The package lives on GitHub Packages, so npm needs one line of config</summary>
+<summary>The package is on GitHub Packages, which needs one line of npm config</summary>
 
 <br>
 
@@ -261,22 +199,191 @@ echo "@mrigankad:registry=https://npm.pkg.github.com" >> ~/.npmrc
 npm login --scope=@mrigankad --registry=https://npm.pkg.github.com
 ```
 
-GitHub Packages requires authentication even for public packages. If you would
-rather skip that, clone the repo instead — it is the same thing.
+Or skip the registry and clone:
+`git clone https://github.com/mrigankad/AiEmcee.git my-video`.
 
 </details>
 
-**Or clone it** — identical result, no registry setup.
+Full walkthrough: **[docs/01-quickstart.md](docs/01-quickstart.md)**.
 
-```bash
-git clone https://github.com/mrigankad/AiEmcee.git my-video
-cd my-video && npm run setup && npm run doctor && npm run build
+---
+
+## How it works
+
+**Audio is the metronome.** Normal video work records the picture, then fights
+to fit a voice to it. AiEmcee does it the other way round:
+
+1. Every narration line is spoken first, and its exact length measured.
+2. Every scene gets exactly *that line + a short gap*, on one timeline.
+3. The picture (one composition, drawn by AiEmcee Motion) and the sound (one
+   ffmpeg mix) are both built from that timeline. So are the transitions,
+   titles, camera moves, the presenter's captions and every sound effect.
+
+Two tracks cut from one set of numbers can't drift. Every build proves it:
+
+```
+video    112.37s
+audio    112.38s
+drift    0.008s
 ```
 
-Result: `out/demo.mp4`.
+```
+narration.json ──▶ directed voice ──▶ line lengths
+                                          │
+  your app / a recording ──▶ footage      ▼
+                                 ──▶  timeline  ──▶  Motion picture ───┐
+  explainers, titles, avatar ─────────────┘     └─▶  ffmpeg sound ────┴─▶ out/demo.mp4
+```
 
-Full walkthrough — including how to seed data and choose a voice — in
-**[docs/01-quickstart.md](docs/01-quickstart.md)**.
+The video is a build artifact. When the product changes, run the build again:
+the picture is cached in chunks, so only the scenes that changed are redrawn.
+
+More: **[docs/02-architecture.md](docs/02-architecture.md)**.
+
+---
+
+## What you edit
+
+Four files. Everything else is machinery.
+
+| File | Holds |
+| --- | --- |
+| `narration.json` | the script, one line per scene, and how each line is said |
+| `video.config.mjs` | running order, tone, voice, camera moves, avatar, sound |
+| `scenes.mjs` | what the browser does in each recorded scene |
+| `design.tokens.json` | colours, fonts, frame size, shared by the pipeline and the scenes |
+
+A line of script:
+
+```json
+{
+  "id": "04-search",
+  "delivery": "feature",
+  "text": "Type any serial number, and its whole history comes back. [beat] One search."
+}
+```
+
+A scene in the running order, with a camera move and the presenter:
+
+```js
+{
+  id: "04-search",
+  from: "capture",
+  lowerThird: { kicker: "Search", title: "Any record, its whole history" },
+  focus: [{ at: 4.8, until: 7.7, box: [0.36, 0.34, 0.3, 0.34], label: "The record, from the line" }],
+  avatar: { mode: "corner", mood: "curious" },
+}
+```
+
+`focus` times are seconds into the footage, and `box` is a region of the frame
+(`[x, y, w, h]`, as fractions). Everything else in the direction toolkit is in
+**[docs/10-direction.md](docs/10-direction.md)**.
+
+---
+
+## The studio
+
+Everything above works from the terminal. **AiEmcee Studio** puts it in a
+browser, for you and your team.
+
+```bash
+npm run web                     # the studio server, http://127.0.0.1:4810
+npm --prefix web install        # once
+npm --prefix web run dev        # the studio app, http://localhost:3000
+```
+
+The server runs the engine (renders, files, versions, chat) and the app, built
+with Next.js in `web/`, talks to it. Set `AIEMCEE_STUDIO_URL` if the server is
+somewhere else.
+
+![AiEmcee Studio: the film editor, with the scene strip and Rasa](docs/media/studio-editor.jpg)
+
+| Screen | Does |
+| --- | --- |
+| **Films** | every project with its poster, length and status; filter and sort |
+| **Editor** | the player, the scene strip, and **Preview this scene**: one scene and its sound, drafted in about two seconds |
+| **Script** | one card per line, with word counts and spoken lengths; save and narrate |
+| **Review** | comments pinned to the playhead, replies, resolve, *Fix with Rasa*; approve a film or request changes |
+| **Versions** | every edit, Rasa turn and render saves one; diff against now, restore, undo |
+| **Share** | a public link with chapters, captions, a call to action and a lead form; views, average watch and how far viewers got, per scene |
+| **Renders** | the job queue and live logs; cancel |
+| **Team** | people and roles: viewer, approver, editor, owner |
+
+**Rasa**, the director, is a chat panel on every film. It reads and edits the
+project's files, runs the stage that shows the change, and takes screenshots
+you paste in. Every turn can be undone in one step. Pick the model in the
+panel; each needs its key in the server's environment:
+
+| Model | Key |
+| --- | --- |
+| Claude | `ANTHROPIC_API_KEY` (model: `AIEMCEE_CLAUDE_MODEL`) |
+| OpenAI / Codex | `OPENAI_API_KEY` (model: `AIEMCEE_OPENAI_MODEL`) |
+| Grok | `XAI_API_KEY` (model: `AIEMCEE_XAI_MODEL`) |
+
+**Working as a team.** The studio listens on this computer only until it has
+users. Add the first owner, then open it up:
+
+```bash
+node bin/aiemcee.mjs studio user add you@example.com owner   # prints a token, once
+node bin/aiemcee.mjs studio --host 0.0.0.0                   # put HTTPS in front
+```
+
+Each person signs in with their own token. Once there are users, a film can be
+shared only after an approver has approved it. Leads from share pages are kept
+with the project and, with `AIEMCEE_LEADS_WEBHOOK` set, posted to your CRM.
+Plan, API and security notes: **[docs/13-backend.md](docs/13-backend.md)**.
+
+---
+
+## The motion engine
+
+AiEmcee draws its pictures with its own engine, **AiEmcee Motion**: a small
+runtime for the scenes, an esbuild bundle, headless Chromium pages that capture
+each frame, and a frame server that decodes footage at the size each frame
+shows. It replaced Remotion on 2026-11-12; the scenes did not change.
+
+| Smoke film, 14 s at 1080p60 | Remotion | Motion |
+| --- | --- | --- |
+| `compose --fast` render | 260.6 s | 31.8 s |
+| bundle | 13 s | 0.3 s |
+| a cached re-render | | 0.6 s |
+| scene dependencies | 980 MB | 49 MB |
+
+Frames match the old engine (SSIM 0.995), and its spring, easing and
+interpolation maths match Remotion 4.0.518 bit for bit
+(`npm --prefix remotion test`).
+
+**Motion Studio** previews the scenes while you write them:
+
+```bash
+npm run studio -- --project projects/my-film    # http://127.0.0.1:3123
+```
+
+Every composition, searchable and grouped; scrub, play, step frame by frame,
+zoom, loop, change speed. It rebuilds when you save a scene. The Film shows
+the project's last compose, with its scenes on the timeline.
+
+More: **[docs/14-motion-engine.md](docs/14-motion-engine.md)**.
+
+---
+
+## Let Claude direct it
+
+The repo is built to be handed to an agent: the script, the choreography and
+the motion graphics are all text. It ships with a Claude Code skill,
+**`/emcee`**, that directs a film end to end. It reads your footage on a
+grid, places camera moves on the real UI, picks the tone and the presenter's
+moods, builds, reviews every still and fixes what's wrong.
+
+```
+/emcee make it feel like a launch
+```
+
+One rule makes or breaks it: **Claude can't see your product.** Point it at
+the product's repo, or paste the routes and selectors. Prompts for every
+stage: **[docs/prompts/](docs/prompts/)** · the reasoning:
+**[docs/08-prompting-claude.md](docs/08-prompting-claude.md)**. In the studio,
+the same work happens in the Rasa panel.
 
 ---
 
@@ -284,204 +391,63 @@ Full walkthrough — including how to seed data and choose a voice — in
 
 | Command | Does |
 | --- | --- |
-| `npm run doctor` | preflight — every external tool, plus config validation |
-| `npm run validate` | config + choreography checks, no external tools needed |
-| `npm run narrate` | `narration.json` → directed `tts/*.mp3` + caption cues + `durations.json` (`-- --audition` to compare voices) |
-| `npm run motion` | Remotion → preview renders of single motion scenes (optional) |
-| `npm run capture` | Playwright drives your app → `raw/*.webm` |
-| `npm run clip` | cuts scene footage out of an existing recording → `raw/*.mp4` |
-| `npm run compose` | the directed film: Remotion picture + ffmpeg sound → `out/demo.mp4`, poster, review stills |
-| `npm run build` | every stage, in order |
-| `npm run studio` | Remotion Studio — scrubbable timeline, hot reload |
+| `npm run film -- --project <dir>` | narrate → clip → capture → compose for one project |
+| `npm run build` | the same, for the root film |
+| `npm run narrate` | speaks the script → `tts/`. `-- --audition` compares voices |
+| `npm run capture` | records your app → `raw/*.mp4` (HQ screencast, 3840x2160 → lossless 60 fps); `raw/*.webm` with `capture.mode: "recordVideo"` |
+| `npm run clip` | cuts scenes from an existing recording → `raw/*.mp4` |
+| `npm run compose` | renders and mixes the film → `out/`, plus poster and review stills. `-- --sound-only` remixes in seconds |
+| `npm run motion` | renders the project's motion scenes on their own → `remotion/out/` |
+| `node bin/aiemcee.mjs batch --projects "projects/uc-*" --fast` | composes many films, skipping up-to-date ones |
+| `npm run validate` | checks the config, no external tools needed |
+| `npm run doctor` | checks the toolchain |
+| `npm run studio` | Motion Studio: preview every composition, rebuilt on save |
+| `npm run web` | the AiEmcee Studio server (pair it with `npm --prefix web run dev`) |
 
-Every step takes an optional scene id, so you iterate on one thing at a time:
+Every command takes `--project <dir>`. Most steps take a scene id, so you can
+work on one thing at a time: `npm run capture -- --project projects/my-film --only 04-search`.
+
+### Compose: master, fast, draft, preview
 
 ```bash
-npm run narrate -- 05-cta      # reworded one line
-npm run capture -- 05-cta      # re-record one scene
-npm run motion  -- Problem     # preview one composition
-npm run compose                # render the film
-npm run compose -- --sound-only  # remix only, reusing the last picture
+node bin/aiemcee.mjs compose --project projects/my-film                    # master: PNG frames, crf 12
+node bin/aiemcee.mjs compose --project projects/my-film --fast             # JPEG frames, same out/<name>.mp4
+node bin/aiemcee.mjs compose --project projects/my-film --draft            # 720p check -> out/<name>-draft.mp4
+node bin/aiemcee.mjs compose --project projects/my-film --preview 04-search  # one scene + its sound
+node bin/aiemcee.mjs compose --project projects/my-film --master 4k        # 3840x2160 -> out/<name>-4k.mp4
 ```
 
----
+Every profile renders the same Film in chunks cut on the timeline's seams:
+each scene's body and each transition. A chunk is keyed by a hash of what it
+shows, so a second compose reuses everything that did not change, and changing
+one scene redraws only that scene and its two transitions. Chunks render in
+parallel and join with a stream copy. `--if-changed` exits at once when the
+delivered film is already up to date; `render: { mode: "fast" }` in a project
+config makes the fast engine the default.
 
-## What you actually edit
-
-Four files. Everything else is machinery.
-
-<table>
-<tr><th align="left">File</th><th align="left">Holds</th></tr>
-<tr><td><code>narration.json</code></td><td>the script — one entry per scene</td></tr>
-<tr><td><code>scenes.mjs</code></td><td>what the browser does during each recorded scene</td></tr>
-<tr><td><code>video.config.mjs</code></td><td>your app's URL, the running order, timing, voice</td></tr>
-<tr><td><code>design.tokens.json</code></td><td>colours, fonts, frame size — read by both Node and Remotion</td></tr>
-</table>
-
-### The script
-
-```json
-{
-  "id": "04-feature",
-  "title": "The thing that wins the demo",
-  "delivery": "feature",
-  "text": "Now Acme explores your application like a real user. It crawls every page, maps complete journeys, and listens to network traffic. [beat] It discovers your APIs, automatically."
-}
-```
-
-`delivery` is how the line is said (`hook`, `problem`, `explain`, `feature`,
-`payoff`, `close`), and `[beat]` is a deliberate pause. `npm run narrate` then
-tells you whether it is readable:
-
-```
-spoke   04-feature         feature   12.26s   26 words  127 wpm
-```
-
-130–150 wpm is the target for a measured film, 150–175 for an energetic one.
-Fix pace by editing the words first; then set the pace per intent in
-`tts.delivery`.
-
-### The choreography
+A `from: "still"` scene is an image with a gentle camera move:
 
 ```js
-"04-feature": async (s) => {
-  await s.goto("/projects/demo/discovery");
-  await s.wait(2.2);                                // land, let the viewer orient
-  await s.scroll(240, 1500, s.main);                // "crawls every page"
-  await s.click("text=API inventory", { after: 900 });  // "discovers your APIs"
-  await s.wait(2.4);                                // hold while the point lands
-},
+{ id: "03-plant", from: "still", still: { src: "stills/03-plant.png", zoom: [1, 1.06], pan: [[0.5, 0.5], [0.53, 0.48]], ease: "inOut" } }
 ```
 
-You have 12.26 seconds. Break the line into beats, give each beat the seconds
-it is spoken over. `capture` then tells you how close you got:
-
-```
-04-feature   narration 12.3s  drove 11.4s  clip 13.2s
-```
-
-### The running order
-
-```js
-sequence: [
-  { id: "01-hook",      from: "capture" },
-  { id: "02-problem",   from: "motion", composition: "Problem" },
-  { id: "03-onboarding", from: "capture" },
-  {
-    id: "04-feature",
-    from: "capture",
-    lowerThird: { kicker: "Discovery", title: "The AI explores your app" },
-  },
-  { id: "05-cta", from: "capture" },
-],
-```
-
-Reordering the film is reordering that array. Nothing else knows the order.
+When nothing is drawn over it (no lower third, no avatar), the fast and draft
+engines draw its body with ffmpeg alone, which is faster still; its
+transitions come from the motion engine. `batch` takes `--jobs N` (default 1:
+one film already fills the CPU), `--stages narrate,compose` and `--force`.
+Details and tuning: **[docs/07-compositing.md](docs/07-compositing.md#fast-engine)**.
 
 ---
 
-## Driving it with Claude Code
+## Make it yours
 
-This repo is designed to be handed to an agent. The script, the choreography
-and the motion graphics are all just text files.
+Everything visual reads from `design.tokens.json`: swap the brand colours and
+the two fonts, drop your mark in `remotion/public/`, and every scene follows.
+Frame size lives there too, so 1920×1080 or a square crop is one edit.
+**[docs/06-styling.md](docs/06-styling.md)**
 
-**The one thing that decides whether it works: Claude cannot see your product.**
-Point it at the product's repo, or paste the routes and selectors. Otherwise it
-writes plausible choreography clicking buttons that do not exist, and you find
-out fifteen timeouts later.
-
-Four passes, each verified before the next:
-
-```
-1. script         → narration.json      → npm run narrate  → listen
-2. sequence       → video.config.mjs    → npm run doctor
-3. choreography   → scenes.mjs          → npm run capture  → watch
-4. motion + brand → Remotion, tokens    → npm run motion   → check a frame
-5. direction      → /emcee              → npm run compose  → review stills
-```
-
-Step 5 is a Claude Code skill that ships with the repo (`.claude/skills/emcee`).
-It reads the footage on a grid, places focus moves on the real UI, picks the
-tone, sets up the avatar, builds, reviews every still and fixes what is wrong.
-
-Copy-paste prompts for each: **[docs/prompts/](docs/prompts/)**.
-The reasoning behind them, plus a full worked session:
-**[docs/08-prompting-claude.md](docs/08-prompting-claude.md)**.
-
----
-
-## Making it yours
-
-Rebranding is about twenty minutes. Everything reads from
-`design.tokens.json`:
-
-```json
-{
-  "video": { "width": 1600, "height": 900, "fps": 30 },
-  "fonts": { "display": "Michroma", "sans": "Geist" },
-  "color": {
-    "brand": "#ff7b1c", "brandLight": "#ffa12b", "brandDeep": "#dc440c",
-    "page": "#f2f2f2", "container": "#ffffff", "text": "#101010"
-  }
-}
-```
-
-Change the four brand stops, swap the two font imports in
-`remotion/src/fonts.ts`, drop your mark in `remotion/public/`. The compositions
-never need touching — if you find yourself editing one to change a colour, that
-colour is hardcoded and should be a token.
-
-Frame size lives there too, so switching to 1920×1080 or a square crop is one
-edit. Dark mode is a surface inversion plus two known exceptions, both
-documented.
-
-**[docs/06-styling.md](docs/06-styling.md)** — the full design system.
-
----
-
-## Repo map
-
-```
-narration.json          the script
-scenes.mjs              browser choreography, one function per captured scene
-video.config.mjs        project settings and the running order
-design.tokens.json      design system, shared by the pipeline and Remotion
-
-scripts/
-  doctor.mjs            preflight
-  validate.mjs          config checks, no external tools needed
-  narrate.mjs           directed edge-tts + duration measurement
-  capture.mjs           Playwright recording
-  clip.mjs              cuts scenes out of an existing recording
-  compose.mjs           timeline → picture → sound → master → review
-  lib/
-    config.mjs          config + narration loading, path helpers
-    timeline.mjs        the one clock: scenes, transitions, titles, cues
-    delivery.mjs        sentence-level prosody, pauses, voice mastering
-    voice.mjs           voice envelope and caption timing, for the avatar
-    sound.mjs           music bed, effects, ducking, loudness
-    review.mjs          review stills, contact sheet, poster
-    remotion.mjs        runs the Remotion CLI safely on every OS
-    ffmpeg.mjs          ffmpeg / ffprobe wrappers
-    scene.mjs           the Scene API your choreography is written against
-
-remotion/
-  render.mjs            preview renders of single motion scenes
-  src/
-    Root.tsx            composition registry
-    scenes.ts           the copy for each motion scene
-    theme.ts            reads design.tokens.json
-    fonts.ts            Google Fonts, bundled rather than fetched at render time
-    film/               the Film: transitions, footage camera, tones
-    avatar/             the Wayam orb, captions, host and corner presenter
-    components/Motion.tsx   FadeUp, KineticLine, Trace, Card, Eyebrow, Page
-    compositions/       Problem, Pipeline, EndCard, LowerThird
-
-assets/sfx/             sound effects (Kenney, CC0)
-.claude/skills/emcee/   the /emcee directing skill
-docs/                   the handbook
-examples/parikshan/     a complete shipped film, annotated
-```
+For a complete shipped film, annotated scene by scene, see
+**[examples/parikshan/](examples/parikshan/)**.
 
 ---
 
@@ -489,50 +455,47 @@ examples/parikshan/     a complete shipped film, annotated
 
 | | |
 | --- | --- |
-| **[01 Quickstart](docs/01-quickstart.md)** | first video, start to finish |
-| **[02 Architecture](docs/02-architecture.md)** | how the four stages fit together, and why |
-| **[03 Writing narration](docs/03-writing-narration.md)** | script structure, pacing, the rules that make a demo watchable |
-| **[04 Scene choreography](docs/04-scene-choreography.md)** | the Scene API, and how to time a browser to a voice |
-| **[05 Motion graphics](docs/05-motion-graphics.md)** | Remotion compositions, timing, adding your own |
-| **[06 Styling](docs/06-styling.md)** | the design system, and how to rebrand the whole thing |
-| **[07 Compositing](docs/07-compositing.md)** | how the film is assembled: timeline, picture, sound |
-| **[08 Prompting Claude](docs/08-prompting-claude.md)** | how to drive this repo with an agent |
-| **[Prompt library](docs/prompts/)** | copy-paste prompts for each stage |
-| **[09 Troubleshooting](docs/09-troubleshooting.md)** | every failure we have hit, and its fix |
-| **[10 Direction](docs/10-direction.md)** | tone, transitions, focus moves, sound, poster, review |
+| [01 Quickstart](docs/01-quickstart.md) | your first video, start to finish |
+| [02 Architecture](docs/02-architecture.md) | how the stages fit together, and why |
+| [03 Writing narration](docs/03-writing-narration.md) | script structure and pacing |
+| [04 Scene choreography](docs/04-scene-choreography.md) | the Scene API, timing a browser to a voice |
+| [05 Motion graphics](docs/05-motion-graphics.md) | the explainer scenes, and adding your own |
+| [06 Styling](docs/06-styling.md) | the design system, rebranding |
+| [07 Compositing](docs/07-compositing.md) | timeline, picture, sound, master |
+| [08 Prompting Claude](docs/08-prompting-claude.md) · [prompts](docs/prompts/) | driving the repo with an agent |
+| [09 Troubleshooting](docs/09-troubleshooting.md) | every failure we've hit, and the fix |
+| [10 Direction](docs/10-direction.md) | tone, transitions, camera, voice, avatar, sound |
+| [11 Quality](docs/11-quality.md) | 2x screencast capture, lossless intermediates, 1080p60 / 4K masters, measured numbers |
+| [12 Engine roadmap](docs/12-engine-roadmap.md) | how the engine got fast, phase by phase |
+| [13 Studio backend](docs/13-backend.md) | the studio server: API, versions, review, sharing, roles, security |
+| [14 Motion engine](docs/14-motion-engine.md) | how frames are drawn, footage, profiles, tuning, measurements |
 
 ---
 
-## Worked example
+## Credits
 
-**[examples/parikshan/](examples/parikshan/)** is a complete three-minute
-product film as actually shipped — thirteen scenes, eight lower thirds, two
-explainers. The real script, the real durations, the real choreography,
-annotated with why each choice works:
-
-- why the pipeline diagram sits *fourth* and not first
-- why the longest scene in the film spends half its time admitting a limitation
-- why the CTA returns to the exact frame the film opened on
-- why scene six expands a collapsed section to approve something *on camera*
-  rather than showing an already-approved list
-
-Read it before writing your own script. It is the fastest way to internalise
-the rhythm.
-
----
-
-## How long it takes
-
-| Stage | 3-minute video |
-| --- | --- |
-| narrate | ~1 min (seconds when cached) |
-| capture | roughly real time — the browser drives the scenes live |
-| compose | 3–5 min on a laptop; `--sound-only` in under a minute |
-
-Writing the script is the long pole. The build is not.
-
----
+- The direction system adapts the creative approach of
+  [/brag](https://github.com/latent-spaces/brag) (MIT) to long-form demos.
+- Sound effects by [Kenney](https://kenney.nl/), CC0.
+- Built on [React](https://react.dev/), [Next.js](https://nextjs.org/),
+  [esbuild](https://esbuild.github.io/), [Playwright](https://playwright.dev/),
+  [ffmpeg](https://ffmpeg.org/) and [edge-tts](https://github.com/rany2/edge-tts).
+  The scene API follows [Remotion](https://www.remotion.dev/)'s, which the
+  engine used until 2026-11-12, so scenes written for it run unchanged.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+AiEmcee is created by **[Mriganka](https://github.com/mrigankad)** and
+licensed under the **[Apache License 2.0](LICENSE)**.
+
+You may use, modify and ship it, including in commercial products. In return:
+
+- **Credit stays with it.** Keep the [NOTICE](NOTICE) file, or its text, with
+  any copy or derived work you distribute. "Built with AiEmcee by Mriganka" in
+  your credits, about screen or documentation is the expected form.
+- **Say what you changed.** Modified files carry a note that you changed them.
+- **The names are not included.** "AiEmcee", "AiEmcee Motion", "AiEmcee
+  Studio", "Rasa" and the logo identify this project, not yours.
+
+Releases up to 1.1.0 were published under the MIT License, and those copies
+stay MIT. Third-party parts keep their own licenses: see [NOTICE](NOTICE).

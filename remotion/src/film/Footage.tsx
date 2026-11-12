@@ -15,7 +15,7 @@ import React from "react";
 import { AbsoluteFill, Freeze, OffthreadVideo, staticFile, useCurrentFrame } from "remotion";
 
 import { fontSans } from "../fonts";
-import { brandAlpha, theme } from "../theme";
+import { brandAlpha, overlay, theme } from "../theme";
 import { cameraAt, clamp } from "./camera";
 import type { Focus, Tone, VideoSegment } from "./types";
 
@@ -50,6 +50,10 @@ export function Footage({
     <OffthreadVideo
       src={staticFile(segment.src)}
       muted
+      // The footage is 2x the frame (3840x2160 for 1080p): drawn at full size
+      // and scaled by the browser, so the frame is supersampled and a 2x focus
+      // move lands on native pixels. No tone mapping: UI colours stay exact.
+      toneMapped={false}
       style={{
         width: "100%",
         height: "100%",
@@ -84,6 +88,55 @@ export function Footage({
         <Spotlight focus={active} k={k} s={s} cx={cx} cy={cy} W={W} H={H} dim={tone.focus.dim} />
       ) : null}
     </AbsoluteFill>
+  );
+}
+
+/**
+ * Pinned-marker caption (Paper "04 · Parikshan · Focus captions", C3): an orange dot with a soft
+ * halo pinned at the top-left of the focus area, a short leader line, and a white label card.
+ * Used when a focus move sets `spotlight: false`, so nothing dims or boxes the product UI.
+ */
+function PinnedLabel({ label, x, y, W, k }: { label: string; x: number; y: number; W: number; k: number }) {
+  const dot = 28;
+  const line = 56;
+  const cardW = Math.min(760, 26 * label.length + 60); // rough width at 28px bold
+  const px = clamp(x + 24, 40, W - 40);
+  const py = clamp(y + 24, 40, 1040);
+  const flip = px + dot / 2 + line + cardW > W - 40; // not enough room on the right: put the card on the left
+  const grow = Math.min(1, k * 1.4);
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: px - dot / 2,
+        top: py - dot / 2,
+        display: "flex",
+        flexDirection: flip ? "row-reverse" : "row",
+        alignItems: "center",
+        transform: flip ? `translateX(calc(-100% + ${dot}px))` : undefined,
+        opacity: k,
+        fontFamily: fontSans,
+      }}
+    >
+      <div style={{ width: dot, height: dot, borderRadius: 999, flexShrink: 0, background: theme.brand, boxShadow: `0 0 0 ${8 * grow}px ${brandAlpha(0.2)}`, transform: `scale(${0.6 + 0.4 * grow})` }} />
+      <div style={{ width: line * grow, height: 2, background: theme.brand, flexShrink: 0 }} />
+      <div
+        style={{
+          padding: "14px 22px",
+          borderRadius: 16,
+          background: overlay.card,
+          color: overlay.label,
+          fontSize: 28,
+          fontWeight: 700,
+          letterSpacing: -0.3,
+          whiteSpace: "nowrap",
+          boxShadow: "0 18px 44px rgba(22,24,29,0.18), 0 0 0 1px rgba(22,24,29,0.06)",
+          transform: `translateX(${(flip ? 1 : -1) * (1 - k) * 12}px)`,
+        }}
+      >
+        {label}
+      </div>
+    </div>
   );
 }
 
@@ -137,7 +190,11 @@ function Spotlight({
         />
       ) : null}
 
-      {focus.label ? (
+      {focus.label && !spot ? (
+        <PinnedLabel label={focus.label} x={x + pad} y={y + pad} W={W} k={k} />
+      ) : null}
+
+      {focus.label && spot ? (
         <div
           style={{
             position: "absolute",

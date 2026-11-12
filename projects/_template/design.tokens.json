@@ -1,0 +1,11 @@
+{
+  "$comment": "Optional. Merged over the engine's design.tokens.json; list only what differs. fonts.sans / fonts.display must be a family remotion/src/fonts.ts imports (Geist, Inter Tight, Michroma).",
+  "video": { "width": 1920, "height": 1080, "fps": 60 },
+  "fonts": { "sans": "Inter Tight", "display": "Inter Tight" },
+  "color": {
+    "brand": "#C9480A",
+    "brandLight": "#E2672A",
+    "brandDeep": "#A63A06",
+    "brandSoft": "#FDF1EA"
+  }
+}

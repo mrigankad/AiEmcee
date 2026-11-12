@@ -38,7 +38,7 @@ if (!scenes.length) {
 }
 
 for (const entry of scenes) {
-  const { src, start = 0, end, speed = 1 } = entry.clip ?? {};
+  const { src, start = 0, end, speed = 1, native = false } = entry.clip ?? {};
   if (!src) throw new Error(`${entry.id}: clip scene needs clip.src`);
 
   const source = at(src);
@@ -69,7 +69,8 @@ for (const entry of scenes) {
     "-t", take.toFixed(3),
     "-i", source,
     "-vf",
-    `setpts=${(1 / speed).toFixed(4)}*PTS,scale=${W}:${H}:flags=lanczos,fps=${FPS},format=yuv420p`,
+    // native: keep the source resolution (e.g. a 4K take), as capture does, so focus zooms stay sharp.
+    `setpts=${(1 / speed).toFixed(4)}*PTS,${native ? "" : `scale=${W}:${H}:flags=lanczos,`}fps=${FPS},format=yuv420p`,
     "-an",
     ...config.encode.intermediate,
     "-pix_fmt", "yuv420p",

@@ -8,7 +8,7 @@ instead of like this template.
 `design.tokens.json` at the repo root. Read by both runtimes:
 
 - `video.config.mjs` (Node) — frame size, frame rate, cursor colours
-- `remotion/src/theme.ts` (TypeScript, via Remotion's bundler) — everything
+- `remotion/src/theme.ts` (TypeScript, via the motion engine's esbuild bundle) — everything
 
 It is JSON rather than JavaScript because those are the only two formats both
 consume without a build step. Frame size lives there for a specific reason: if
@@ -144,19 +144,20 @@ different colours — the gradients depend on it.
 
 ### 2. Fonts
 
-Change the two imports in `remotion/src/fonts.ts`:
+Fonts ship as local woff2 files from `@fontsource` packages, imported in
+`remotion/src/fonts.ts`:
 
 ```ts
-import { loadFont as loadDisplay } from "@remotion/google-fonts/Michroma";
-import { loadFont as loadSans } from "@remotion/google-fonts/Geist";
+import "@fontsource/michroma/latin-400.css";
+import "@fontsource/geist/latin-400.css";
+import "@fontsource/geist/latin-600.css";
 ```
 
-Any family in `@remotion/google-fonts` works — the package name is the family
-name with no spaces. Update `fonts` in `design.tokens.json` to match so the
-docs stay honest.
-
-For a non-Google font, put the file in `remotion/public/` and load it with
-`@remotion/fonts`.
+Pick the families by name in `fonts.display` and `fonts.sans` in
+`design.tokens.json`. Any family listed in `FAMILIES` in `fonts.ts` works; to
+add one, install its `@fontsource` package into `remotion/`, import its
+`latin-<weight>.css` files and add it to `FAMILIES`. An unknown name falls back
+to the engine default.
 
 Pairings that work:
 

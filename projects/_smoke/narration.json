@@ -1,0 +1,14 @@
+[
+  {
+    "id": "01-ui",
+    "title": "Small text, captured sharp",
+    "delivery": "explain",
+    "text": "This is a smoke test of the capture engine. The page is rendered at twice the film's resolution, so twelve pixel text stays crisp, even when the camera moves in."
+  },
+  {
+    "id": "02-motion",
+    "title": "A motion scene",
+    "delivery": "close",
+    "text": "And this is a motion scene, rendered straight from Remotion."
+  }
+]

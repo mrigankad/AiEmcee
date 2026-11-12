@@ -13,6 +13,7 @@ import { EndCard, type EndCardProps } from "./compositions/EndCard";
 import { Pipeline, type PipelineProps } from "./compositions/Pipeline";
 import { Problem, type ProblemProps } from "./compositions/Problem";
 import { sec } from "./theme";
+import { LOCAL_MOTION } from "@local";
 
 export const problemProps = {
   eyebrow: "The cost today",
@@ -78,11 +79,13 @@ export const endCardProps = {
   tagline: "Every module, on the record.",
 } satisfies EndCardProps;
 
-type Entry = { component: React.FC<any>; props: object };
+export type Entry = { component: React.FC<any>; props: object };
 
 /** Composition id (as named in video.config.mjs) -> component + copy. */
 export const MOTION: Record<string, Entry> = {
   Problem: { component: Problem, props: problemProps },
   Pipeline: { component: Pipeline, props: pipelineProps },
   EndCard: { component: EndCard, props: endCardProps },
+  // Your own scenes, registered in src/local.tsx (private: see local.example.tsx).
+  ...LOCAL_MOTION,
 };

@@ -9,7 +9,23 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["ES2022", "DOM"]
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "paths": {
+      "remotion": [
+        "./engine/runtime.tsx"
+      ],
+      "@local": [
+        "./src/local.tsx",
+        "./src/local.example.tsx"
+      ]
+    }
   },
-  "include": ["src", "../design.tokens.json"]
+  "include": [
+    "src",
+    "engine",
+    "../design.tokens.json"
+  ]
 }

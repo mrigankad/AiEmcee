@@ -8,7 +8,8 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 
-import { at, loadConfig } from "./lib/config.mjs";
+import { at, engineAt, loadConfig, ROOT, show } from "./lib/config.mjs";
+import { describeVideo } from "./lib/ffmpeg.mjs";
 
 const require = createRequire(import.meta.url);
 const rows = [];
@@ -86,10 +87,10 @@ if (!needsBrowser) {
 }
 
 check(
-  "remotion dependencies",
+  "scene dependencies (react, esbuild)",
   () => {
-    if (!fs.existsSync(at("remotion", "node_modules", "remotion"))) {
-      throw new Error("remotion/node_modules is empty");
+    for (const dep of ["react", "react-dom", "esbuild"]) {
+      if (!fs.existsSync(engineAt("remotion", "node_modules", dep))) throw new Error(`remotion/node_modules has no ${dep}`);
     }
     return "installed";
   },
@@ -118,6 +119,30 @@ try {
   });
 }
 
+/* The last delivered master, if there is one: what actually shipped. */
+if (project) {
+  const c = project.config;
+  for (const file of [at(c.output), at(c.output).replace(/\.mp4$/i, "-4k.mp4")]) {
+    if (!fs.existsSync(file)) continue;
+    try {
+      rows.push({ ok: true, label: "master", detail: `${show(file)}  ${describeVideo(file).text}` });
+    } catch (err) {
+      rows.push({ ok: false, label: "master", detail: err.message.split("\n")[0], fix: "re-run compose" });
+    }
+  }
+  if (c.capture) {
+    const v = c.capture.viewport;
+    const dsf = c.capture.deviceScaleFactor ?? 1;
+    rows.push({
+      ok: true,
+      label: "capture",
+      detail: `${c.capture.mode ?? "screencast"}  ${v.width}x${v.height} @ dsf ${dsf} (${v.width * dsf}x${v.height * dsf}), film ${c.video.width}x${c.video.height}@${c.video.fps}`,
+    });
+  }
+}
+
+console.log(`
+  project  ${show(ROOT)}`);
 const pad = Math.max(...rows.map((r) => r.label.length));
 console.log();
 for (const row of rows) {
@@ -129,6 +154,6 @@ const failed = rows.filter((r) => !r.ok).length;
 console.log(
   failed
     ? `\n${failed} problem(s) to fix before building.\n`
-    : "\nAll good. Run `npm run build`.\n",
+    : "\nAll good. Run `npm run film -- --project <dir>`.\n",
 );
 process.exit(failed ? 1 : 0);

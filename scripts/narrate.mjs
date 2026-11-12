@@ -16,23 +16,29 @@
  *   npm run narrate                 regenerate anything whose take changed
  *   npm run narrate -- 05-cta       only this scene
  *   npm run narrate -- --all        force a rebuild of every line
+ *   npm run narrate -- --jobs 6     lines in flight at once (default tts.parallel, 4)
  *   npm run narrate -- --audition   the first line (or a given id) in several
  *                                   voices, to out/voice-audition/, to choose by ear
  */
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import fs from "node:fs";
 import path from "node:path";
 
 import { at, ensureDir, loadConfig, resetDir } from "./lib/config.mjs";
 import { masterChain, prosodyFor, splitLine, spokenText } from "./lib/delivery.mjs";
-import { ff, probe } from "./lib/ffmpeg.mjs";
+import { ff, ffAsync, pool, probe } from "./lib/ffmpeg.mjs";
+
+const execFileAsync = promisify(execFile);
 
 const { config, narration } = await loadConfig();
 
 const args = process.argv.slice(2);
 const force = args.includes("--all");
 const audition = args.includes("--audition");
-const only = args.find((a) => !a.startsWith("--"));
+const jobsAt = args.indexOf("--jobs");
+const jobs = Math.max(1, Number(jobsAt >= 0 ? args[jobsAt + 1] : config.tts.parallel ?? 4) || 4);
+const only = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--jobs");
 
 const ttsDir = ensureDir(at(config.paths.tts));
 const tts = config.tts;
@@ -41,8 +47,21 @@ const HEAD = 0.06;
 const TAIL = 0.12;
 
 /** One request to edge-tts: one sentence, one prosody. */
-function speak(text, voice, prosody, dest) {
-  execFileSync(
+async function speak(text, voice, prosody, dest) {
+  // The edge-tts service intermittently answers with no audio; retry with backoff.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await speakOnce(text, voice, prosody, dest);
+    } catch (err) {
+      if (attempt >= 6) throw err;
+      console.warn(`  edge-tts returned no audio, retry ${attempt}/5`);
+      await new Promise((r) => setTimeout(r, 800 * attempt));
+    }
+  }
+}
+
+async function speakOnce(text, voice, prosody, dest) {
+  await execFileAsync(
     "edge-tts",
     [
       "--voice", voice,
@@ -55,8 +74,9 @@ function speak(text, voice, prosody, dest) {
       "--text", text,
       "--write-media", dest,
     ],
-    { stdio: ["ignore", "ignore", "inherit"] },
+    { windowsHide: true },
   );
+  if (!fs.existsSync(dest) || fs.statSync(dest).size === 0) throw new Error("edge-tts wrote no audio");
 }
 
 /** Mono 48k WAV of silence, for the pauses between sentences. */
@@ -69,7 +89,7 @@ function gapWav(seconds, dest) {
  * Speaks one line sentence by sentence, joins the takes with directed pauses,
  * masters it, and writes the MP3 and its sentence cues.
  */
-function renderLine(line, voice, mp3, srt) {
+async function renderLine(line, voice, mp3, srt) {
   const parts = splitLine(line.text, pauses);
   const work = resetDir(path.join(ttsDir, ".parts", line.id));
   const intent = line.delivery ?? "explain";
@@ -78,18 +98,24 @@ function renderLine(line, voice, mp3, srt) {
   const cues = [];
   let t = HEAD;
 
-  parts.forEach((part, i) => {
+  // Every sentence of the line is spoken at once; they are joined in order below.
+  const takes = await Promise.all(parts.map(async (part, i) => {
     const raw = path.join(work, `${i}.mp3`);
     const wav = path.join(work, `${i}.wav`);
-    speak(part.text, voice, prosodyFor(tts, intent, i, parts.length, part.text), raw);
+    await speak(part.text, voice, prosodyFor(tts, intent, i, parts.length, part.text), raw);
     // Trim the engine's own lead-in and tail, so the pauses are ours.
-    ff([
+    await ffAsync([
       "-i", raw,
       "-af",
       "silenceremove=start_periods=1:start_threshold=-48dB:start_silence=0.02," +
         "areverse,silenceremove=start_periods=1:start_threshold=-48dB:start_silence=0.04,areverse",
       "-ar", "48000", "-ac", "1", "-y", wav,
     ]);
+    return wav;
+  }));
+
+  parts.forEach((part, i) => {
+    const wav = takes[i];
     const d = probe(wav);
     pieces.push(wav);
     cues.push({ start: t, end: t + d, text: part.text });
@@ -153,7 +179,7 @@ if (audition) {
   const outDir = resetDir(at(path.dirname(config.output), "voice-audition"));
   for (const voice of voices) {
     const dest = path.join(outDir, `${line.id}-${voice.replace(/^en-\w+-|Neural$/g, "")}.mp3`);
-    renderLine(line, voice, dest, null);
+    await renderLine(line, voice, dest, null);
     console.log(`audition  ${voice.padEnd(34)} ${probe(dest).toFixed(2)}s  -> ${path.relative(at(), dest)}`);
   }
   console.log(`\nListen, then set tts.voice in video.config.mjs and run \`npm run narrate\`.`);
@@ -167,12 +193,13 @@ const durations = {};
 let built = 0;
 let reused = 0;
 
-for (const line of narration) {
+// Lines are independent until durations.json, so several are in flight at
+// once. Results are logged in script order once all of them are done.
+const results = await pool(narration, jobs, async (line) => {
   const mp3 = path.join(ttsDir, `${line.id}.mp3`);
   if (only && only !== line.id) {
     // Still needs a duration, so read the existing file rather than skipping.
-    if (fs.existsSync(mp3)) durations[line.id] = round(probe(mp3));
-    continue;
+    return fs.existsSync(mp3) ? { line, skip: true, seconds: round(probe(mp3)) } : null;
   }
 
   const txt = path.join(ttsDir, `${line.id}.txt`);
@@ -187,23 +214,25 @@ for (const line of narration) {
     fs.existsSync(take) &&
     fs.readFileSync(take, "utf8") === key;
 
-  if (unchanged) {
-    reused++;
-  } else {
-    renderLine(line, tts.voice, mp3, srt);
+  if (!unchanged) {
+    await renderLine(line, tts.voice, mp3, srt);
     fs.writeFileSync(take, key);
     fs.writeFileSync(txt, spokenText(line.text));
-    built++;
   }
+  return { line, unchanged, seconds: round(probe(mp3)) };
+});
 
-  const seconds = round(probe(mp3));
-  durations[line.id] = seconds;
-
-  const words = spokenText(line.text).split(/\s+/).length;
-  const wpm = Math.round((words / seconds) * 60);
+for (const r of results) {
+  if (!r) continue;
+  durations[r.line.id] = r.seconds;
+  if (r.skip) continue;
+  if (r.unchanged) reused++;
+  else built++;
+  const words = spokenText(r.line.text).split(/\s+/).length;
+  const wpm = Math.round((words / r.seconds) * 60);
   console.log(
-    `${unchanged ? "cached" : "spoke "}  ${line.id.padEnd(18)} ${(line.delivery ?? "explain").padEnd(8)} ` +
-      `${seconds.toFixed(2).padStart(6)}s  ${String(words).padStart(3)} words  ${wpm} wpm`,
+    `${r.unchanged ? "cached" : "spoke "}  ${r.line.id.padEnd(18)} ${(r.line.delivery ?? "explain").padEnd(8)} ` +
+      `${r.seconds.toFixed(2).padStart(6)}s  ${String(words).padStart(3)} words  ${wpm} wpm`,
   );
 }
 
@@ -220,7 +249,7 @@ const extra =
   (config.intro ? config.timing.introTail : 0);
 
 console.log(
-  `\n${built} synthesised, ${reused} cached\n` +
+  `\n${built} synthesised, ${reused} cached (${jobs} in flight)\n` +
     `narration ${total.toFixed(1)}s + gaps ${gaps.toFixed(1)}s + cards ${extra.toFixed(1)}s ` +
     `= about ${fmt(total + gaps + extra)} of finished film`,
 );

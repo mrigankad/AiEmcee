@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AiEmcee Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFB547%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%23F98620%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D9400B%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22256%22%20height%3D%22256%22%20rx%3D%2260%22%20fill%3D%22url(%23g)%22%2F%3E%3Cpath%20d%3D%22M98%2076Q98%2062%20110%2069L180%20112Q192%20120%20180%20128L110%20171Q98%20178%2098%20164Z%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22196%22%20cy%3D%2270%22%20r%3D%2215%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
+<style>
+  :root {
+    --bg: #0e0f11; --panel: #16181b; --line: #262a2f; --text: #e8e9eb; --dim: #8b9099;
+    --accent: #6ea8fe; --ok: #5cc28a; --bad: #e5655d; --warn: #e3b552;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, "Segoe UI", sans-serif; }
+  button, select, textarea, input { font: inherit; color: inherit; }
+  button { background: #22262b; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+  button:hover { border-color: #3a4048; }
+  button.primary { background: var(--accent); color: #0b1220; border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  .app { display: grid; grid-template-columns: 220px 1fr 380px; height: 100vh; }
+  aside, main, section { min-height: 0; overflow: hidden; }
+  aside { border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .brand { padding: 14px 16px; font-weight: 650; letter-spacing: .01em; border-bottom: 1px solid var(--line); }
+  .projects { overflow: auto; flex: 1; padding: 6px; }
+  .proj { display: flex; justify-content: space-between; width: 100%; text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; }
+  .proj:hover { background: #1c1f23; }
+  .proj.on { background: #1f2a3a; }
+  .proj small { color: var(--dim); }
+  main { display: flex; flex-direction: column; }
+  .bar { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .bar h2 { margin: 0 8px 0 0; font-size: 15px; font-weight: 650; }
+  .spacer { flex: 1; }
+  .stage { padding: 14px; overflow: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  video { width: 100%; max-height: 52vh; background: #000; border-radius: 8px; }
+  .films { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+  .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--dim); }
+  .tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
+  textarea.code { width: 100%; min-height: 320px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 12.5px/1.5 var(--mono); resize: vertical; }
+  pre.log { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 0; font: 12px/1.45 var(--mono); white-space: pre-wrap; max-height: 420px; overflow: auto; }
+  .jobs { display: flex; flex-direction: column; gap: 4px; }
+  .job { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+  .job:hover { background: #1c1f23; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); flex: none; }
+  .dot.running { background: var(--warn); } .dot.done { background: var(--ok); } .dot.failed { background: var(--bad); }
+  img.sheet { width: 100%; border-radius: 8px; }
+  .muted { color: var(--dim); }
+  section.chat { border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .msgs { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { padding: 8px 10px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.user { background: #1f2a3a; align-self: flex-end; max-width: 90%; }
+  .msg.assistant { background: var(--panel); border: 1px solid var(--line); }
+  .msg.tool { font: 12px/1.4 var(--mono); color: var(--dim); padding: 4px 8px; }
+  .msg.error { color: var(--bad); }
+  .msg img { max-width: 140px; border-radius: 6px; display: block; margin-top: 6px; }
+  .composer { border-top: 1px solid var(--line); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .composer textarea { width: 100%; min-height: 70px; max-height: 200px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; }
+  .thumbs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .thumbs img { height: 48px; border-radius: 4px; border: 1px solid var(--line); }
+  .row { display: flex; gap: 8px; align-items: center; }
+  select { background: #22262b; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+  input:not([type]), input[type=text] { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+  .list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .item .grow { flex: 1; min-width: 0; }
+  .item.done { opacity: .55; }
+  .card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+  .pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #22262b; text-transform: capitalize; }
+  .pill.approved { background: #1d3b2b; color: var(--ok); } .pill.changes { background: #3b2120; color: var(--bad); }
+  .bars { display: flex; gap: 4px; align-items: flex-end; height: 48px; margin-top: 6px; }
+  .bars div { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; }
+  .add { color: var(--ok); } .del { color: var(--bad); }
+  .login { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; }
+  .login form { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 10px; width: min(380px, 90vw); }
+  @media (max-width: 1100px) { .app { grid-template-columns: 180px 1fr; } section.chat { grid-column: 1 / -1; height: 50vh; border-left: 0; border-top: 1px solid var(--line); } .app { height: auto; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">AiEmcee Studio</div>
+    <div class="projects" id="projects"></div>
+  </aside>
+
+  <main>
+    <div class="bar">
+      <h2 id="title">Pick a project</h2>
+      <button data-run="narrate">Narrate</button>
+      <button data-run="capture">Capture</button>
+      <button data-run="compose --draft">Draft</button>
+      <button data-run="compose --fast" class="primary">Render</button>
+      <button data-run="film">Full film</button>
+      <select id="scene" title="Scene to preview"></select>
+      <button id="preview" title="Draft of one scene with its sound, in a second or two">Preview scene</button>
+      <span class="spacer"></span>
+      <span class="muted" id="me"></span>
+      <span class="muted" id="queue"></span>
+    </div>
+    <div class="stage">
+      <video id="player" controls preload="metadata"></video>
+      <div class="films" id="films"></div>
+      <div class="tabs">
+        <button data-tab="script" class="on">Script</button>
+        <button data-tab="review">Review</button>
+        <button data-tab="versions">Versions</button>
+        <button data-tab="share">Share</button>
+        <button data-tab="jobs">Jobs</button>
+      </div>
+      <div id="tab-script">
+        <textarea class="code" id="narration" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button id="save">Save narration</button>
+          <button id="saveNarrate">Save and narrate</button>
+          <span class="muted" id="saved"></span>
+        </div>
+      </div>
+      <div id="tab-review" hidden>
+        <div class="row">
+          <strong id="approval" class="pill">pending</strong>
+          <span class="spacer"></span>
+          <input id="approveNote" placeholder="Note for the team (optional)">
+          <button id="approve">Approve</button>
+          <button id="changes">Request changes</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <input id="comment" placeholder="Comment at the playhead, e.g. the logo is cut off" style="flex:1">
+          <button id="addComment">Comment at <span id="at">0:00</span></button>
+        </div>
+        <div class="list" id="comments"></div>
+        <div id="sheets"></div>
+      </div>
+      <div id="tab-versions" hidden>
+        <div class="row"><input id="versionLabel" placeholder="Name this version" style="flex:1"><button id="saveVersion">Save version</button></div>
+        <div class="list" id="versions"></div>
+        <pre class="log" id="diff" hidden></pre>
+      </div>
+      <div id="tab-share" hidden>
+        <div class="card">
+          <div class="row"><input id="shareTitle" placeholder="Page title" style="flex:1"></div>
+          <div class="row"><input id="ctaLabel" placeholder="Button label, e.g. Book a demo" style="flex:1"><input id="ctaUrl" placeholder="https://" style="flex:1"></div>
+          <div class="row"><label class="row"><input type="checkbox" id="leadForm"> Lead form</label><span class="spacer"></span><button class="primary" id="share">Create link for this film</button></div>
+          <span class="muted" id="shareMsg"></span>
+        </div>
+        <div class="list" id="shares"></div>
+      </div>
+      <div id="tab-jobs" hidden>
+        <div class="jobs" id="jobs"></div>
+        <pre class="log" id="log"></pre>
+      </div>
+    </div>
+  </main>
+
+  <section class="chat">
+    <div class="bar">
+      <strong>Director</strong><span class="spacer"></span>
+      <button id="undo" type="button" title="Restore the files from before the last change">Undo</button>
+      <select id="provider"></select>
+    </div>
+    <div class="msgs" id="msgs"><div class="muted">Ask for changes to the script, the scenes or the cut. Paste or attach images.</div></div>
+    <div class="composer">
+      <div class="thumbs" id="thumbs"></div>
+      <textarea id="input" placeholder="e.g. Tighten the intro line and render a draft"></textarea>
+      <div class="row">
+        <label><button id="attachBtn" type="button">Attach image</button><input type="file" id="attach" accept="image/*" multiple hidden></label>
+        <span class="spacer"></span>
+        <button class="primary" id="send">Send</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+// Local studios need no token; a shared one asks once and keeps it in this browser.
+let token = "";
+try { token = localStorage.getItem("aiemcee.token") || ""; } catch {}
+const auth = () => (token ? { authorization: `Bearer ${token}` } : {});
+const tok = (url) => (token ? `${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}` : url);
+const api = async (url, opts = {}) => {
+  const r = await fetch(url, { ...opts, headers: { "content-type": "application/json", ...auth(), ...(opts.headers || {}) } });
+  const data = r.status === 204 ? {} : await r.json();
+  if (r.status === 401) login();
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+};
+function login() {
+  if (document.querySelector(".login")) return;
+  const input = el("input", { type: "password", placeholder: "Studio token (aie_...)", autocomplete: "off" });
+  const form = el("form", {}, el("strong", { textContent: "Sign in to this studio" }),
+    el("span", { className: "muted", textContent: "Ask the studio owner for a token: aiemcee studio user add <name> <role>" }), input, el("button", { className: "primary", textContent: "Sign in" }));
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    token = input.value.trim();
+    try { localStorage.setItem("aiemcee.token", token); } catch {}
+    location.reload();
+  };
+  document.body.append(el("div", { className: "login" }, form));
+  input.focus();
+}
+const P = () => `/api/projects/${encodeURIComponent(project)}`;
+const clock = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+const when = (iso) => new Date(iso).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+const btn = (text, fn, cls = "") => { const b = el("button", { textContent: text, className: cls }); b.onclick = fn; return b; };
+const el = (tag, props = {}, ...kids) => {
+  const n = Object.assign(document.createElement(tag), props);
+  for (const k of kids) n.append(k);
+  return n;
+};
+
+let project = null;
+let history = [];
+let pending = []; // uploaded image paths for the next message
+let watching = null;
+
+/* Projects ------------------------------------------------------- */
+async function loadProjects() {
+  const list = await api("/api/projects");
+  const box = $("#projects");
+  box.replaceChildren(...list.map((p) => {
+    const b = el("button", { className: "proj" + (p.name === project ? " on" : "") }, el("span", { textContent: p.name }), el("small", { textContent: p.films ? `${p.films}` : "" }));
+    b.onclick = () => openProject(p.name);
+    return b;
+  }));
+  if (!project && list[0]) openProject(list[0].name);
+}
+
+async function openProject(name) {
+  project = name;
+  try { localStorage.setItem("aiemcee.project", name); } catch {}
+  history = [];
+  $("#msgs").replaceChildren(el("div", { className: "muted", textContent: `Directing ${name}.` }));
+  $("#title").textContent = name;
+  await refreshProject();
+  loadProjects();
+}
+
+async function refreshProject() {
+  if (!project) return;
+  const info = await api(P());
+  $("#narration").value = info.narration ?? "";
+  let lines = [];
+  try { lines = JSON.parse(info.narration || "[]"); } catch {}
+  const keep = $("#scene").value;
+  $("#scene").replaceChildren(...lines.map((l) => el("option", { value: l.id, textContent: l.id })));
+  if (lines.some((l) => l.id === keep)) $("#scene").value = keep;
+  const films = $("#films");
+  const current = filmName();
+  films.replaceChildren(...info.films.map((f) => {
+    const b = el("button", { textContent: f.name });
+    b.onclick = () => play(f);
+    return b;
+  }));
+  const pick = info.films.find((f) => f.name === current) ?? info.films.find((f) => !f.name.startsWith("preview-")) ?? info.films[0];
+  if (pick) play(pick);
+  else { $("#player").removeAttribute("src"); $("#player").load(); }
+  $("#sheets").replaceChildren(...(info.sheets.length
+    ? info.sheets.map((s) => el("div", {}, el("p", { className: "muted", textContent: s.name }), el("img", { className: "sheet", src: tok(`${s.url}?t=${Date.now()}`) })))
+    : [el("p", { className: "muted", textContent: "No review stills yet. Render a draft." })]));
+  loadTab();
+}
+
+let playing = null;
+const filmName = () => playing?.name ?? null;
+function play(f) {
+  playing = f;
+  const v = $("#player");
+  v.src = tok(`${f.url}?t=${f.mtime}`);
+  if (f.poster) v.poster = tok(`${f.poster}?t=${f.mtime}`);
+  else v.removeAttribute("poster");
+  document.querySelectorAll("#films button").forEach((b) => b.classList.toggle("primary", b.textContent === f.name));
+  if (!$("#tab-review").hidden) loadReview();
+}
+$("#player").addEventListener("timeupdate", () => ($("#at").textContent = clock($("#player").currentTime)));
+
+/* Review: comments and approvals --------------------------------- */
+async function loadReview() {
+  if (!project) return;
+  const [comments, approvals] = await Promise.all([api(`${P()}/comments`), api(`${P()}/approvals`)]);
+  const film = filmName();
+  const last = approvals.filter((a) => a.film === film).at(-1);
+  const pill = $("#approval");
+  pill.className = `pill ${last?.decision ?? ""}`;
+  pill.textContent = film ? `${film}: ${last ? (last.decision === "approved" ? "approved" : "changes requested") : "pending"}${last ? ` by ${last.by}` : ""}` : "no film";
+  pill.title = last?.note ?? "";
+  $("#comments").replaceChildren(...(comments.length ? comments.slice().reverse().map((c) => {
+    const at = c.at != null ? btn(clock(c.at), () => { $("#player").currentTime = c.at; $("#player").play(); }) : el("span", { className: "muted", textContent: "·" });
+    const replies = (c.replies ?? []).map((r) => el("div", { className: "muted", textContent: `↳ ${r.author}: ${r.text}` }));
+    const body = el("div", { className: "grow" }, el("div", { textContent: c.text }), el("div", { className: "muted", textContent: `${c.author} · ${when(c.createdAt)}${c.status === "rasa" ? " · sent to Rasa" : ""}` }), ...replies);
+    const done = c.status === "resolved";
+    const actions = el("div", { className: "row" },
+      btn("Reply", async () => { const t = window.prompt("Reply"); if (t) { await api(`${P()}/comments/${c.id}`, { method: "PATCH", body: JSON.stringify({ reply: t }) }); loadReview(); } }),
+      btn("Fix with Rasa", async () => {
+        await api(`${P()}/comments/${c.id}`, { method: "PATCH", body: JSON.stringify({ status: "rasa" }) });
+        $("#input").value = `Review note${c.at != null ? ` at ${clock(c.at)}` : ""}${c.scene ? ` (scene ${c.scene})` : ""}: ${c.text}\nFix it and render a draft.`;
+        $("#input").focus();
+      }),
+      btn(done ? "Reopen" : "Resolve", async () => { await api(`${P()}/comments/${c.id}`, { method: "PATCH", body: JSON.stringify({ status: done ? "open" : "resolved" }) }); loadReview(); }));
+    return el("div", { className: `item${done ? " done" : ""}` }, at, body, actions);
+  }) : [el("p", { className: "muted", textContent: "No comments yet. Pause on a frame and say what to change." })]));
+}
+$("#addComment").onclick = async () => {
+  const text = $("#comment").value.trim();
+  if (!text || !project) return;
+  await api(`${P()}/comments`, { method: "POST", body: JSON.stringify({ text, at: $("#player").currentTime, version: filmName() }) });
+  $("#comment").value = "";
+  loadReview();
+};
+$("#comment").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#addComment").click(); });
+const decideFilm = (decision) => async () => {
+  if (!filmName()) return;
+  try {
+    await api(`${P()}/approvals`, { method: "POST", body: JSON.stringify({ film: filmName(), decision, note: $("#approveNote").value }) });
+    $("#approveNote").value = "";
+  } catch (e) { $("#approval").textContent = e.message; return; }
+  loadReview();
+};
+$("#approve").onclick = decideFilm("approved");
+$("#changes").onclick = decideFilm("changes");
+
+/* Versions ------------------------------------------------------- */
+async function loadVersions() {
+  const list = await api(`${P()}/versions`);
+  $("#versions").replaceChildren(...(list.length ? list.map((v) => el("div", { className: "item" },
+    el("div", { className: "grow" }, el("div", { textContent: `#${v.id} ${v.label}` }), el("div", { className: "muted", textContent: `${v.kind} · ${v.by} · ${when(v.createdAt)}${v.undone ? " · undone" : ""}` })),
+    btn("Diff vs now", async () => {
+      const d = await api(`${P()}/versions/${v.id}/diff`);
+      const pre = $("#diff");
+      pre.hidden = false;
+      const names = Object.keys(d);
+      pre.replaceChildren(...(names.length ? names.flatMap((n) => [el("div", { textContent: `── ${n}` }), ...d[n].map((o) => el("div", { className: o.op === "+" ? "add" : o.op === "-" ? "del" : "", textContent: `${o.op} ${o.line}` }))]) : [el("div", { textContent: `#${v.id} matches the current files.` })]));
+    }),
+    btn("Restore", async () => { if (window.confirm(`Restore #${v.id}? The current files are saved as a version first.`)) { await api(`${P()}/versions/${v.id}/restore`, { method: "POST" }); refreshProject(); } }))) : [el("p", { className: "muted", textContent: "No versions yet. Every edit, Rasa turn and render saves one." })]));
+}
+$("#saveVersion").onclick = async () => {
+  await api(`${P()}/versions`, { method: "POST", body: JSON.stringify({ label: $("#versionLabel").value.trim() || undefined }) });
+  $("#versionLabel").value = "";
+  loadVersions();
+};
+
+/* Share ---------------------------------------------------------- */
+async function loadShares() {
+  const list = await api(`${P()}/shares`);
+  const rows = await Promise.all(list.map(async (s) => {
+    const a = await api(`${P()}/shares/${s.id}/analytics`).catch(() => null);
+    const link = new URL(s.url, location.href).href;
+    const stats = a ? `${a.views} views · ${a.viewers} viewers · avg ${clock(a.avgWatch)} · ${a.ctaClicks} CTA · ${a.leads} leads` : "";
+    const bars = a?.retention.length ? el("div", { className: "bars", title: "Share of viewers who reached each scene" }, ...a.retention.map((r) => el("div", { style: `height:${Math.max(4, r.reached * 100)}%`, title: `${r.title}: ${Math.round(r.reached * 100)}%` }))) : "";
+    return el("div", { className: "item" },
+      el("div", { className: "grow" }, el("a", { href: link, target: "_blank", textContent: s.title, style: "color:var(--accent)" }), el("div", { className: "muted", textContent: `${s.film} · ${stats}` }), bars),
+      btn("Copy link", () => navigator.clipboard.writeText(link)),
+      btn("Revoke", async () => { if (window.confirm("Revoke this link? It stops working for everyone.")) { await api(`${P()}/shares/${s.id}`, { method: "DELETE" }); loadShares(); } }));
+  }));
+  $("#shares").replaceChildren(...(rows.length ? rows : [el("p", { className: "muted", textContent: "No links yet. Approve a film, then create one." })]));
+}
+$("#share").onclick = async () => {
+  if (!filmName()) return;
+  try {
+    const cta = $("#ctaLabel").value.trim() ? { label: $("#ctaLabel").value.trim(), url: $("#ctaUrl").value.trim() || null } : null;
+    const s = await api(`${P()}/shares`, { method: "POST", body: JSON.stringify({ film: filmName(), title: $("#shareTitle").value.trim() || undefined, cta, leadForm: $("#leadForm").checked }) });
+    $("#shareMsg").textContent = `Link ready: ${new URL(s.url, location.href).href}`;
+    loadShares();
+  } catch (e) { $("#shareMsg").textContent = e.message; }
+};
+
+/* Scene preview -------------------------------------------------- */
+$("#preview").onclick = async () => {
+  if (!project || !$("#scene").value) return;
+  const job = await api(`${P()}/preview`, { method: "POST", body: JSON.stringify({ scene: $("#scene").value }) });
+  const name = `preview-${$("#scene").value}.mp4`;
+  playing = { name };
+  watch(job.id, false);
+};
+
+/* Tabs ----------------------------------------------------------- */
+document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => {
+  document.querySelectorAll("[data-tab]").forEach((x) => x.classList.toggle("on", x === b));
+  for (const t of ["script", "review", "versions", "share", "jobs"]) $(`#tab-${t}`).hidden = t !== b.dataset.tab;
+  loadTab();
+}));
+function loadTab() {
+  if (!project) return;
+  const tab = document.querySelector("[data-tab].on")?.dataset.tab;
+  const load = { review: loadReview, versions: loadVersions, share: loadShares, jobs: loadJobs }[tab];
+  load?.().catch((e) => console.warn(e));
+}
+
+/* Narration ------------------------------------------------------ */
+async function saveNarration() {
+  try {
+    await api(`/api/projects/${encodeURIComponent(project)}/narration`, { method: "PUT", body: JSON.stringify({ text: $("#narration").value }) });
+    $("#saved").textContent = "saved";
+    return true;
+  } catch (e) {
+    $("#saved").textContent = e.message;
+    return false;
+  }
+}
+$("#save").onclick = saveNarration;
+$("#saveNarrate").onclick = async () => (await saveNarration()) && run("narrate");
+
+/* Jobs ----------------------------------------------------------- */
+document.querySelectorAll("[data-run]").forEach((b) => (b.onclick = () => run(b.dataset.run)));
+
+async function run(spec) {
+  if (!project) return;
+  const [stage, ...flags] = spec.split(" ");
+  const job = await api("/api/jobs", { method: "POST", body: JSON.stringify({ project, stage, flags }) });
+  watch(job.id);
+}
+
+async function loadJobs() {
+  const list = await api("/api/jobs");
+  const active = list.filter((j) => j.status === "running" || j.status === "queued").length;
+  $("#queue").textContent = active ? `${active} job${active > 1 ? "s" : ""} running` : "";
+  $("#jobs").replaceChildren(...list.slice(0, 12).map((j) => {
+    const row = el("div", { className: "job" }, el("span", { className: `dot ${j.status}` }),
+      el("span", { textContent: `#${j.id} ${j.project} · ${j.stage} ${j.flags.join(" ")}` }),
+      el("span", { className: "muted", textContent: j.seconds ? `${j.seconds.toFixed(0)}s` : j.status }));
+    row.onclick = () => watch(j.id);
+    return row;
+  }));
+}
+
+function watch(id, show = true) {
+  if (show) document.querySelector('[data-tab="jobs"]').click();
+  if (watching) watching.close();
+  const log = $("#log");
+  log.textContent = "";
+  const es = new EventSource(tok(`/api/jobs/${id}/events`));
+  watching = es;
+  es.addEventListener("log", (e) => {
+    log.textContent += JSON.parse(e.data);
+    log.scrollTop = log.scrollHeight;
+  });
+  es.addEventListener("status", (e) => {
+    loadJobs();
+    if (JSON.parse(e.data) === "done") refreshProject();
+  });
+  es.addEventListener("job", loadJobs);
+  es.onerror = () => { es.close(); loadJobs(); };
+}
+
+/* Chat ----------------------------------------------------------- */
+async function loadProviders() {
+  const { providers } = await api("/api/status");
+  $("#provider").replaceChildren(...providers.map((p) => el("option", { value: p.id, textContent: `${p.label} · ${p.model}${p.ready ? "" : " (no key)"}` })));
+  const ready = providers.find((p) => p.ready);
+  if (ready) $("#provider").value = ready.id;
+}
+
+async function upload(file) {
+  const data = await new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1]);
+    r.readAsDataURL(file);
+  });
+  const name = file.name && file.name !== "image.png" ? file.name : `pasted-${Date.now()}.${(file.type.split("/")[1] || "png").replace("jpeg", "jpg")}`;
+  const res = await api(`/api/projects/${encodeURIComponent(project)}/upload`, { method: "POST", body: JSON.stringify({ name, data }) });
+  pending.push(res);
+  $("#thumbs").append(el("img", { src: res.url, title: res.path }));
+}
+
+$("#attachBtn").onclick = () => $("#attach").click();
+$("#attach").onchange = async (e) => { for (const f of e.target.files) await upload(f); e.target.value = ""; };
+$("#input").addEventListener("paste", async (e) => {
+  for (const item of e.clipboardData.items) if (item.type.startsWith("image/")) { e.preventDefault(); await upload(item.getAsFile()); }
+});
+$("#input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) send(); });
+$("#send").onclick = send;
+
+const addMsg = (cls, text) => {
+  const m = el("div", { className: `msg ${cls}`, textContent: text });
+  $("#msgs").append(m);
+  $("#msgs").scrollTop = $("#msgs").scrollHeight;
+  return m;
+};
+
+async function send() {
+  const text = $("#input").value.trim();
+  if (!text || !project) return;
+  const images = pending;
+  pending = [];
+  $("#thumbs").replaceChildren();
+  $("#input").value = "";
+  const u = addMsg("user", text);
+  for (const i of images) u.append(el("img", { src: i.url }));
+  $("#send").disabled = true;
+
+  let reply = "";
+  let bubble = null;
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...auth() },
+      body: JSON.stringify({ project, provider: $("#provider").value, history, message: images.length ? `${text}\n\n(attached: ${images.map((i) => i.path).join(", ")})` : text, images: images.map((i) => i.path) }),
+    });
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl);
+        buf = buf.slice(nl + 1);
+        if (!line) continue;
+        const ev = JSON.parse(line);
+        if (ev.type === "text") {
+          reply += (reply ? "\n\n" : "") + ev.text;
+          if (!bubble) bubble = addMsg("assistant", "");
+          bubble.textContent = reply;
+          bubble = null; // the next text after a tool call gets its own bubble
+        } else if (ev.type === "tool") {
+          addMsg("tool", `→ ${ev.name} ${JSON.stringify(ev.input).slice(0, 160)}`);
+        } else if (ev.type === "tool_result") {
+          addMsg("tool", `${ev.ok ? "✓" : "✗"} ${ev.name}: ${ev.text.split("\n")[0].slice(0, 160)}`);
+          if (ev.name === "write_file" || ev.name === "run_stage") refreshProject();
+        } else if (ev.type === "job") {
+          watch(ev.job.id);
+        } else if (ev.type === "error") {
+          addMsg("error", ev.text);
+        }
+      }
+    }
+  } catch (e) {
+    addMsg("error", e.message);
+  }
+  history.push({ role: "user", text }, ...(reply ? [{ role: "assistant", text: reply }] : []));
+  $("#send").disabled = false;
+}
+
+/* Undo and live updates ------------------------------------------ */
+$("#undo").onclick = async () => {
+  if (!project) return;
+  try {
+    const v = await api(`/api/projects/${encodeURIComponent(project)}/undo`, { method: "POST" });
+    addMsg("tool", `↶ restored "${v.label}"`);
+    refreshProject();
+  } catch (e) {
+    addMsg("error", e.message);
+  }
+};
+
+// One stream for everything: jobs, versions, comments, file edits.
+const live = new EventSource(tok("/api/events"));
+live.addEventListener("job", () => loadJobs());
+for (const type of ["comment", "approval", "share", "lead"]) live.addEventListener(type, (e) => {
+  if (JSON.parse(e.data).project === project) loadTab();
+});
+live.addEventListener("file", (e) => {
+  const { project: p } = JSON.parse(e.data);
+  if (p === project) refreshProject();
+});
+live.addEventListener("version", (e) => {
+  const { project: p, action } = JSON.parse(e.data);
+  if (p === project && action !== "created") refreshProject();
+});
+
+/* Boot ----------------------------------------------------------- */
+try { project = null; const last = localStorage.getItem("aiemcee.project"); if (last) openProject(last).catch(() => { project = null; loadProjects(); }); else loadProjects(); } catch { loadProjects(); }
+loadProviders();
+api("/api/me").then((u) => ($("#me").textContent = u.name === "you" ? "" : `${u.name} · ${u.role}`)).catch(() => {});
+setInterval(loadJobs, 30000); // fallback; the event stream does the real work
+</script>
+</body>
+</html>

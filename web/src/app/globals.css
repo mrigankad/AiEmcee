@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* AiEmcee Studio: the Tattva palette from the Paper product UI. Light only, by design. */
+@theme inline {
+  --color-page: #ffffff;
+  --color-rail: #f7f7f8;
+  --color-line: #e8e8ec;
+  --color-line-strong: #d9d9e0;
+  --color-sunk: #efeff2;
+  --color-ink: #16181d;
+  --color-body: #5e6370;
+  --color-mute: #7a7f8c;
+  --color-action: #c9480a;
+  --color-action-deep: #c2380a;
+  --color-kicker: #f26b3a;
+  --color-peach: #fff3ec;
+  --color-peach-2: #fff0e6;
+  --color-ok: #16a06a;
+  --color-ok-bg: #e7f6ef;
+  --color-warn: #b87400;
+  --color-warn-bg: #fff4dc;
+  --color-bad: #c2380a;
+  --color-bad-bg: #fdecec;
+  --color-motion: #7c5cff;
+  --color-motion-bg: #f1edff;
+  --color-teal: #0e8f8e;
+  --font-sans: var(--font-urbanist), system-ui, sans-serif;
+  --radius-card: 12px;
+}
+
+html,
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
+}
+
+/* The gradient used on every primary action in the design. */
+.btn-orb {
+  background-image: linear-gradient(135deg in oklab, #ffa12b 0%, #f0731a 55%, #dc440c 100%);
+  box-shadow: inset 0 1px 0 #ffffff59, 0 2px 6px #dc440c47;
+  color: #fff;
+  font-weight: 700;
+}
+.btn-orb:hover {
+  filter: brightness(1.04);
+}
+.bar-orb {
+  background-image: linear-gradient(90deg in oklab, #ffa12b 0%, #dc440c 100%);
+}
+
+/* Scrollbars: thin, rounded, quiet until hovered. Same as Motion Studio. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d2da transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d2da;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a9adb8;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+/* The job log is dark: a lighter thumb on it. */
+.scroll-dark {
+  scrollbar-color: #3a3e48 transparent;
+}
+.scroll-dark::-webkit-scrollbar-thumb {
+  background: #3a3e48;
+  background-clip: padding-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-kicker);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
