@@ -26,7 +26,10 @@ function merge<T>(a: T, b: unknown): T {
 
 function projectTokens(): unknown {
   try {
-    const raw = typeof process !== "undefined" ? process.env.REMOTION_AIEMCEE_TOKENS : undefined;
+    // The scenes run in the browser: the motion bundle provides `process.env`
+    // (the film's tokens), so read it from globalThis, not Node's types.
+    const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
+    const raw = env?.REMOTION_AIEMCEE_TOKENS;
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
