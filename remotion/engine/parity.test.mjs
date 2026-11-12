@@ -9,7 +9,6 @@
  *                                                   `remotion` package (one-off)
  */
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -78,7 +77,10 @@ if (process.argv.includes("--record")) {
   process.exit(0);
 }
 
-const out = path.join(os.tmpdir(), `motion-parity-${process.pid}.mjs`);
+// Inside the scene package, so the bundle's external imports (react) resolve.
+const cache = path.join(here, "..", "node_modules", ".cache");
+fs.mkdirSync(cache, { recursive: true });
+const out = path.join(cache, `motion-parity-${process.pid}.mjs`);
 await esbuild.build({ entryPoints: [path.join(here, "runtime.tsx")], bundle: true, format: "esm", platform: "node", outfile: out, jsx: "automatic", logLevel: "error", packages: "external", absWorkingDir: path.join(here, "..") });
 const ours = await import(pathToFileURL(out).href);
 fs.rmSync(out);
