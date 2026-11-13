@@ -45,9 +45,9 @@
 
 <div align="center">
 
-![A 17-second excerpt of a film made with AiEmcee](docs/media/preview.gif)
+<img src="docs/media/showreel.gif" alt="An isometric film rendered by AiEmcee Motion: script, voice, capture, film" width="100%">
 
-<sub>An excerpt from a real film built with this repo. No frame was edited by hand.</sub>
+<sub>An isometric showreel, drawn and rendered by AiEmcee Motion from <code>remotion/src/compositions/Showreel.tsx</code>. No frame was edited by hand.</sub>
 
 </div>
 
@@ -113,6 +113,8 @@ Full walkthrough: **[docs/01-quickstart.md](docs/01-quickstart.md)**.
 ## How it works
 
 <img src="docs/media/readme-how.jpg" alt="Audio is the metronome: script, voice, capture and motion, the film" width="100%">
+
+<img src="docs/media/readme-architecture.jpg" alt="Architecture: your script runs through AiEmcee to one timeline, then motion and sound in parallel, then film.mp4" width="100%">
 
 Normal video work records the picture, then fights to fit a voice to it.
 AiEmcee does it the other way round:
@@ -189,6 +191,8 @@ A scene in the running order, with a camera move and the presenter:
 
 Everything above works from the terminal. **AiEmcee Studio** puts it in a
 browser, for you and your team.
+
+<img src="docs/media/readme-workflow.jpg" alt="Studio workflow: edit, preview, render, review, approve, share, with a loop back when changes are requested" width="100%">
 
 ```bash
 npm run web                     # the studio server, http://127.0.0.1:4810

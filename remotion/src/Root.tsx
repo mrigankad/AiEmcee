@@ -18,6 +18,7 @@ import { EndCard } from "./compositions/EndCard";
 import { LowerThird, type LowerThirdProps } from "./compositions/LowerThird";
 import { Pipeline } from "./compositions/Pipeline";
 import { Problem } from "./compositions/Problem";
+import { SHOWREEL_SECONDS, Showreel } from "./compositions/Showreel";
 import { Film, type FilmProps } from "./film/Film";
 import type { Timeline } from "./film/types";
 import { endCardProps, pipelineProps, problemProps } from "./scenes";
@@ -65,6 +66,9 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="EndCard" component={EndCard} durationInFrames={sec(3.9)} {...frame} defaultProps={endCardProps} />
 
       <Composition id="Avatar" component={AvatarPreview} durationInFrames={sec(8)} {...frame} />
+
+      {/* AiEmcee in twelve seconds: the README film. */}
+      <Composition id="Showreel" component={Showreel} durationInFrames={sec(SHOWREEL_SECONDS)} {...frame} />
 
       {/* Your own scenes, from src/local.tsx */}
       <LocalCompositions />
