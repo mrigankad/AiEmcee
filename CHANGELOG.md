@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-11-13
+
+### Added
+
+- **Showreel**, a built-in isometric composition (`remotion/src/compositions/Showreel.tsx`): script, voice, capture, film, drawn and rendered by AiEmcee Motion.
+
+### Changed
+
+- README redesigned: designed panels, the showreel, an architecture flowchart and a studio workflow flowchart.
+- Package description now names AiEmcee Motion instead of Remotion.
+- Share analytics count a viewer only once they press play.
+- GIFs in `docs/media` are left out of the package to keep it small.
+
 ## [1.2.0] — 2026-11-12
 
 ### Added
