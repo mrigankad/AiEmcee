@@ -110,10 +110,13 @@ export function createShares(projectsDir, projectDir) {
     const reach = new Map();
     let views = 0;
     let ctas = 0;
+    // A viewer is a session that pressed play; events from a page that was
+    // only opened or seeked do not count towards viewers or retention.
+    const played = new Set(rows.filter((r) => r.type === "view").map((r) => r.session));
     for (const r of rows) {
       if (r.type === "view") views++;
       if (r.type === "cta") ctas++;
-      reach.set(r.session, Math.max(reach.get(r.session) ?? 0, r.t));
+      if (played.has(r.session)) reach.set(r.session, Math.max(reach.get(r.session) ?? 0, r.t));
     }
     // Sorted once: each chapter then counts its viewers with a binary search,
     // O(V log V + C log V) instead of a pass over every viewer per chapter.
@@ -199,7 +202,7 @@ v.addEventListener("play",()=>{if(!viewed){viewed=true;send("view")}});
 v.addEventListener("ended",()=>send("complete"));
 const btns=[...document.querySelectorAll(".ch button")];
 btns.forEach(b=>b.onclick=()=>{v.currentTime=+b.dataset.t;v.play()});
-v.addEventListener("timeupdate",()=>{if(Math.abs(v.currentTime-last)>=5){last=v.currentTime;send("progress")}let k=-1;btns.forEach((b,i)=>{if(v.currentTime>=+b.dataset.t)k=i});btns.forEach((b,i)=>b.classList.toggle("on",i===k))});
+v.addEventListener("timeupdate",()=>{if(viewed&&!v.paused&&Math.abs(v.currentTime-last)>=5){last=v.currentTime;send("progress")}let k=-1;btns.forEach((b,i)=>{if(v.currentTime>=+b.dataset.t)k=i});btns.forEach((b,i)=>b.classList.toggle("on",i===k))});
 document.getElementById("cta")?.addEventListener("click",()=>send("cta"));
 const f=document.getElementById("lead");
 f?.addEventListener("submit",async e=>{e.preventDefault();const r=await fetch("/s/"+id+"/lead",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(Object.fromEntries(new FormData(f)))});f.innerHTML=r.ok?"<strong>Thanks, we will be in touch.</strong>":"<strong>Could not send. Check the email and try again.</strong>"});

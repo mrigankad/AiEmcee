@@ -1,139 +1,29 @@
 <div align="center">
 
-# AiEmcee
-
-**Narrated product demo videos, generated end to end from a text file.**
-
-Write the script. AiEmcee records your product, voices the narration, animates
-the explainers, directs the camera, scores it, and cuts the film.
-No editor, no timeline, no manual sync.
+<img src="docs/media/readme-hero.jpg" alt="AiEmcee. Write the script. Get the film." width="100%">
 
 [![CI](https://github.com/mrigankad/AiEmcee/actions/workflows/ci.yml/badge.svg)](https://github.com/mrigankad/AiEmcee/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/mrigankad/AiEmcee?label=release)](https://github.com/mrigankad/AiEmcee/releases)
-[![Node](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)](https://nodejs.org)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/mrigankad/AiEmcee?label=release&color=F0731A)](https://github.com/mrigankad/AiEmcee/releases)
+[![Node](https://img.shields.io/badge/node-%E2%89%A520-16181D)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-Apache%202.0-16181D)](LICENSE)
 [![Engine](https://img.shields.io/badge/engine-AiEmcee%20Motion-F0731A)](docs/14-motion-engine.md)
 
-![A 17-second excerpt of a film made with AiEmcee](docs/media/preview.gif)
-
-<sub>An excerpt from a real film built with this repo. No frame was edited by hand.</sub>
+**Narrated product demo videos, generated end to end from a text file.**
 
 [Capabilities](#capabilities) · [Quickstart](#quickstart) · [How it works](#how-it-works) · [The studio](#the-studio) · [Motion engine](#the-motion-engine) · [Commands](#commands) · [Docs](#documentation)
 
 </div>
 
----
-
-## What you get
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-**Your real product, on camera.** Playwright drives your app with a virtual
-cursor that eases and clicks like a person, or AiEmcee cuts scenes out of a
-recording you already have.
-
-</td>
-<td width="50%" valign="top">
-
-**Designed explainers** for the parts that are an argument, not a UI:
-headlines that set word by word, claims that land one at a time.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-![The avatar hosting the opening line](docs/media/avatar-host.jpg)
-
-**An AI presenter** that speaks the narration, moving with the voice, and
-shows it as word-by-word captions. It hosts the opening and the close, then
-presents the product from the corner.
-
-</td>
-<td valign="top">
-
-![A brand wipe between two scenes](docs/media/transition-wipe.jpg)
-
-**A directed edit.** Transitions between every scene, and camera moves that
-zoom in on the part of the UI that matters, dim the rest and name it.
-
-</td>
-</tr>
-</table>
-
-And the finishing touches, all automatic:
-
-- **A directed voice.** Free neural TTS, spoken a sentence at a time with
-  pace and pitch set by what each line is for (`hook`, `problem`, `feature`,
-  `payoff`…), with deliberate pauses and a mastering chain.
-- **Sound design.** A music bed that ducks under the voice, effects cued from
-  the edit, and the master levelled to -16 LUFS for every platform.
-- **Five tones**: `polished`, `default`, `cinematic`, `app-store`,
-  `deadpan`. One setting changes transitions, camera, grade, motion and sound
-  together.
-- **Ready to post.** The best frame is baked in as the thumbnail, and a
-  contact sheet of every scene, transition and title is written for review.
-- **A studio for the team.** Direct a film in chat with Rasa, preview one
-  scene in two seconds, review with comments pinned to frames, approve, and
-  share a link with chapters, captions and a lead form.
-
-<table>
-<tr>
-<td width="33%" valign="top">
-
-![A problem explainer](docs/media/scene-problem.jpg)
-
-**Explainers** set the argument word by word.
-
-</td>
-<td width="33%" valign="top">
-
-![A pipeline explainer](docs/media/scene-pipeline.jpg)
-
-**Diagrams** that build step by step, timed to the voice.
-
-</td>
-<td width="33%" valign="top">
-
-![A lower third over product footage](docs/media/lower-third.jpg)
-
-**Titles** that name each scene as it starts.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-![The presenter's moods](docs/media/avatar-moods.jpg)
-
-**Moods** for the presenter, set per scene.
-
-</td>
-<td valign="top">
-
-![The end card](docs/media/scene-endcard.jpg)
-
-**An end card** with your mark and the call to action.
-
-</td>
-<td valign="top">
-
-![Motion Studio](docs/media/motion-studio.jpg)
-
-**Motion Studio** to preview any scene, frame by frame.
-
-</td>
-</tr>
-</table>
-
----
+<br>
 
 ## Capabilities
 
-Everything in AiEmcee is built here: the timeline, the voice direction, the
-capture pipeline, the renderer and the studio.
+<img src="docs/media/readme-capabilities.jpg" alt="Capabilities: a directed voice, your real product, a directed camera, renders in seconds, an AI presenter, sound design, Rasa the director, built for teams, every format" width="100%">
+
+<details>
+<summary><b>Every capability, in detail</b></summary>
+
+<br>
 
 | Area | What it does |
 | --- | --- |
@@ -148,6 +38,18 @@ capture pipeline, the renderer and the studio.
 | **Rasa** | A director in chat that edits the project and renders the change, with Claude, OpenAI or Grok. Paste a screenshot to show what you mean; undo any turn. |
 | **Agents** | `/emcee`, a Claude Code skill that directs a film end to end, and prompts for every stage. |
 | **Scale** | `batch` renders many films and skips the ones already up to date. |
+
+</details>
+
+### See a film
+
+<div align="center">
+
+![A 17-second excerpt of a film made with AiEmcee](docs/media/preview.gif)
+
+<sub>An excerpt from a real film built with this repo. No frame was edited by hand.</sub>
+
+</div>
 
 ---
 
@@ -210,8 +112,10 @@ Full walkthrough: **[docs/01-quickstart.md](docs/01-quickstart.md)**.
 
 ## How it works
 
-**Audio is the metronome.** Normal video work records the picture, then fights
-to fit a voice to it. AiEmcee does it the other way round:
+<img src="docs/media/readme-how.jpg" alt="Audio is the metronome: script, voice, capture and motion, the film" width="100%">
+
+Normal video work records the picture, then fights to fit a voice to it.
+AiEmcee does it the other way round:
 
 1. Every narration line is spoken first, and its exact length measured.
 2. Every scene gets exactly *that line + a short gap*, on one timeline.
@@ -296,7 +200,7 @@ The server runs the engine (renders, files, versions, chat) and the app, built
 with Next.js in `web/`, talks to it. Set `AIEMCEE_STUDIO_URL` if the server is
 somewhere else.
 
-![AiEmcee Studio: the film editor, with the scene strip and Rasa](docs/media/studio-editor.jpg)
+<img src="docs/media/readme-studio.jpg" alt="AiEmcee Studio: review, versions, share analytics and the public link" width="100%">
 
 | Screen | Does |
 | --- | --- |
@@ -337,17 +241,13 @@ Plan, API and security notes: **[docs/13-backend.md](docs/13-backend.md)**.
 
 ## The motion engine
 
+<img src="docs/media/readme-engine.jpg" alt="AiEmcee Motion: the fast render went from 260.6 s on Remotion to 31.8 s" width="100%">
+
 AiEmcee draws its pictures with its own engine, **AiEmcee Motion**: a small
 runtime for the scenes, an esbuild bundle, headless Chromium pages that capture
 each frame, and a frame server that decodes footage at the size each frame
-shows. It replaced Remotion on 2026-11-12; the scenes did not change.
-
-| Smoke film, 14 s at 1080p60 | Remotion | Motion |
-| --- | --- | --- |
-| `compose --fast` render | 260.6 s | 31.8 s |
-| bundle | 13 s | 0.3 s |
-| a cached re-render | | 0.6 s |
-| scene dependencies | 980 MB | 49 MB |
+shows. It replaced Remotion on 2026-11-12; the scenes did not change. A cached
+re-render takes 0.6 s.
 
 Frames match the old engine (SSIM 0.995), and its spring, easing and
 interpolation maths match Remotion 4.0.518 bit for bit
@@ -362,6 +262,8 @@ npm run studio -- --project projects/my-film    # http://127.0.0.1:3123
 Every composition, searchable and grouped; scrub, play, step frame by frame,
 zoom, loop, change speed. It rebuilds when you save a scene. The Film shows
 the project's last compose, with its scenes on the timeline.
+
+<img src="docs/media/motion-studio.jpg" alt="Motion Studio previewing the Film at 0:05, mid focus move" width="100%">
 
 More: **[docs/14-motion-engine.md](docs/14-motion-engine.md)**.
 
@@ -482,6 +384,8 @@ For a complete shipped film, annotated scene by scene, see
   [ffmpeg](https://ffmpeg.org/) and [edge-tts](https://github.com/rany2/edge-tts).
   The scene API follows [Remotion](https://www.remotion.dev/)'s, which the
   engine used until 2026-11-12, so scenes written for it run unchanged.
+
+<img src="docs/media/readme-credit.jpg" alt="Built with AiEmcee. Designed and built by Mriganka." width="100%">
 
 ## License
 
