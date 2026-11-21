@@ -17,6 +17,7 @@ import { AvatarBackdrop, AvatarPresenter } from "../avatar/AvatarLayer";
 import { LowerThird } from "../compositions/LowerThird";
 import { fontSans } from "../fonts";
 import { MOTION } from "../scenes";
+import { getTemplate } from "../templates/registry";
 import { theme } from "../theme";
 import { Footage } from "./Footage";
 import { StillBody } from "./Still";
@@ -144,10 +145,18 @@ function SegmentBody({
  */
 function MotionBody({ seg, fps }: { seg: MotionSegment; fps: number }) {
   const frame = useCurrentFrame();
-  const entry = MOTION[seg.composition];
-  if (!entry) throw new Error(`Film: no motion scene registered as "${seg.composition}" (remotion/src/scenes.ts)`);
-
-  const Comp = entry.component;
+  let Comp: React.ComponentType<Record<string, unknown>>;
+  let props: Record<string, unknown>;
+  if (seg.template) {
+    // A style template (templates/registry.ts), drawn from the scene's props.
+    Comp = getTemplate(seg.style, seg.template) as unknown as React.ComponentType<Record<string, unknown>>;
+    props = seg.props ?? {};
+  } else {
+    const entry = MOTION[seg.composition ?? ""];
+    if (!entry) throw new Error(`Film: no motion scene registered as "${seg.composition}" (remotion/src/scenes.ts)`);
+    Comp = entry.component as React.ComponentType<Record<string, unknown>>;
+    props = entry.props as Record<string, unknown>;
+  }
   const leadF = Math.round(seg.lead * fps);
   const slotF = Math.round(seg.slot * fps);
 
@@ -155,14 +164,14 @@ function MotionBody({ seg, fps }: { seg: MotionSegment; fps: number }) {
     return (
       <Freeze frame={0}>
         <Sequence durationInFrames={slotF}>
-          <Comp {...entry.props} />
+          <Comp {...props} />
         </Sequence>
       </Freeze>
     );
   }
   return (
     <Sequence from={leadF} durationInFrames={slotF}>
-      <Comp {...entry.props} />
+      <Comp {...props} />
     </Sequence>
   );
 }

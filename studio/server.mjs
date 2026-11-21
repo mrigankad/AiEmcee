@@ -6,12 +6,18 @@
  *
  * Projects
  *   GET  /api/status                               providers, projects dir, auth mode
+ *   GET  /api/styles                               remotion/src/templates/catalog.json as is
  *   GET  /api/projects                             projects with a video.config.mjs
+ *   POST /api/projects                             { name, title?, style?, brief?, baseUrl? } -> { name }   editor+
  *   GET  /api/projects/:p                          narration, durations, films, review sheets
  *   GET  /api/projects/:p/files/:name              one source file (narration.json, scenes.mjs, video.config.mjs, design.tokens.json)
  *   PUT  /api/projects/:p/files/:name              { text } validated, snapshotted first
  *   PUT  /api/projects/:p/narration                { text } (kept for the first studio UI)
  *   POST /api/projects/:p/upload                   { name, data: base64 } -> assets/uploads/
+ * Boards (docs/15-styles-and-boards.md)
+ *   GET  /api/projects/:p/boards                   boards.json ({ version: 1, boards: [] } if missing)
+ *   POST /api/projects/:p/boards/ops               { ops } -> new boards.json; SSE `boards`
+ *   GET  /api/projects/:p/boards/:id/still.png?t=  PNG preview, cached by content hash
  * Versions
  *   GET  /api/projects/:p/versions                 list
  *   POST /api/projects/:p/versions                 { label } manual snapshot
@@ -61,10 +67,13 @@ import { fileURLToPath } from "node:url";
 import { chatTurn, providerStatus } from "./agent.mjs";
 import { decide, gateOn, listApprovals, status as approvalStatus } from "./lib/approvals.mjs";
 import { createAuth, needs, ROLES } from "./lib/auth.mjs";
+import { applyToProject, loadCatalog, readBoards, validateDoc } from "./lib/boards.mjs";
 import { addComment, listComments, updateComment } from "./lib/comments.mjs";
 import { publish, subscribe } from "./lib/events.mjs";
 import { createQueue } from "./lib/jobs.mjs";
+import { createProject } from "./lib/projects.mjs";
 import { createShares } from "./lib/shares.mjs";
+import { boardStill } from "./lib/stills.mjs";
 import { readJson, SOURCE_FILES, stateDir } from "./lib/store.mjs";
 import { diff, listVersions, restore, snapshot, undo } from "./lib/versions.mjs";
 
@@ -196,6 +205,7 @@ function validateSource(name, text) {
     } catch (err) {
       throw httpError(400, `${name}: ${err.message}`);
     }
+    if (name === "boards.json") validateDoc(parsed, loadCatalog());
     if (name === "narration.json" && (!Array.isArray(parsed) || parsed.some((l) => typeof l?.id !== "string" || typeof l?.text !== "string"))) {
       throw httpError(400, "narration.json must be an array of { id, text }");
     }
@@ -224,6 +234,19 @@ function writeSource(project, name, text, by = "you") {
   publish("file", { project, name, by });
   return { changed: true, version: version.id };
 }
+
+/** A film's resolved style for a board: board -> boards.json -> config `style` -> catalog default. */
+function boardStyle(dir, doc, board, catalog) {
+  if (board.style) return board.style;
+  if (doc.style) return doc.style;
+  // The config is code; a top-level `style: "<id>"` line is all that is read here.
+  const src = fs.readFileSync(path.join(dir, "video.config.mjs"), "utf8");
+  const fromConfig = /^\s{2}style:\s*["']([\w-]+)["']/m.exec(src)?.[1];
+  return catalog.styles.some((s) => s.id === fromConfig) ? fromConfig : catalog.defaultStyle;
+}
+
+// New films copy projects/_template: the projects folder's own, else the engine's.
+const TEMPLATE = fs.existsSync(path.join(PROJECTS, "_template", "video.config.mjs")) ? path.join(PROJECTS, "_template") : path.join(ROOT, "projects", "_template");
 
 /* ---------------------------------------------------------------- */
 /* Jobs                                                              */
@@ -381,6 +404,14 @@ async function route(req, res) {
     return json(res, { removed: parts[2] });
   }
   if (m === "GET" && url.pathname === "/api/projects") return json(res, listProjects());
+  if (m === "GET" && url.pathname === "/api/styles") return json(res, loadCatalog());
+  if (m === "POST" && url.pathname === "/api/projects") {
+    const { name, title, style, brief, baseUrl } = await body(req, 64 * 1024);
+    const made = createProject({ projectsDir: PROJECTS, templateDir: TEMPLATE, catalog: loadCatalog(), name, title, style, brief, baseUrl });
+    cards.delete(made.name);
+    publish("project", { project: made.name, action: "created", by: user.name });
+    return json(res, made, 201);
+  }
   if (m === "GET" && url.pathname === "/api/events") return subscribe(req, res);
 
   /* Projects ------------------------------------------------------ */
@@ -417,6 +448,25 @@ async function route(req, res) {
       fs.writeFileSync(dest, Buffer.from(String(data), "base64"));
       const rel = path.relative(projectDir(name), dest).split(path.sep).join("/");
       return json(res, { path: rel, url: `/files/${name}/${rel}` });
+    }
+
+    if (sub === "boards") {
+      const dir = projectDir(name);
+      if (m === "GET" && !parts[4]) return json(res, readBoards(dir));
+      if (m === "POST" && parts[4] === "ops" && !parts[5]) {
+        const { ops } = await body(req, 1024 * 1024);
+        return json(res, applyToProject(dir, ops, { by: user.name }).boards);
+      }
+      if (m === "GET" && parts[4] && parts[5] === "still.png") {
+        const doc = readBoards(dir);
+        const board = doc.boards.find((b) => b.id === parts[4]);
+        if (!board) throw httpError(404, `no board ${parts[4]}`);
+        const t = url.searchParams.has("t") ? Number(url.searchParams.get("t")) : 3;
+        if (!Number.isFinite(t) || t < 0 || t > 600) throw httpError(400, "t: seconds, 0 to 600");
+        const catalog = loadCatalog();
+        const file = await boardStill(dir, { board, style: boardStyle(dir, doc, board, catalog), t: Math.round(t * 100) / 100 });
+        return sendFile(req, res, file);
+      }
     }
 
     if (sub === "versions") {

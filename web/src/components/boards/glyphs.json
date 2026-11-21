@@ -1,0 +1,114 @@
+{
+  "name": "Emcee Glyphs",
+  "version": 1,
+  "grid": 24,
+  "stroke": 1.75,
+  "note": "Each glyph is a list of SVG elements on a 24x24 grid. 'ink' parts take the style's stroke colour, 'accent' parts the accent colour; 'fill' parts are filled instead of stroked. Draw with fill=none, round caps and joins.",
+  "glyphs": {
+    "film": [
+      { "el": "rect", "x": 3, "y": 5, "width": 18, "height": 14, "rx": 2 },
+      { "el": "path", "d": "M10 9.5v5l4-2.5z", "tone": "accent", "fill": true }
+    ],
+    "script": [
+      { "el": "path", "d": "M6 3h9l4 4v14H6z" },
+      { "el": "path", "d": "M9 11h7M9 15h5" },
+      { "el": "circle", "cx": 16.5, "cy": 5.5, "r": 1, "tone": "accent", "fill": true }
+    ],
+    "voice": [
+      { "el": "path", "d": "M4 10v4M8 7v10M16 8v8M20 11v2" },
+      { "el": "path", "d": "M12 4v16", "tone": "accent" }
+    ],
+    "capture": [
+      { "el": "path", "d": "M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" },
+      { "el": "circle", "cx": 12, "cy": 12, "r": 3, "tone": "accent", "fill": true }
+    ],
+    "boards": [
+      { "el": "rect", "x": 3, "y": 4, "width": 8, "height": 6, "rx": 1.5 },
+      { "el": "rect", "x": 13, "y": 4, "width": 8, "height": 6, "rx": 1.5 },
+      { "el": "rect", "x": 3, "y": 14, "width": 8, "height": 6, "rx": 1.5 },
+      { "el": "rect", "x": 13, "y": 14, "width": 8, "height": 6, "rx": 1.5, "tone": "accent" }
+    ],
+    "timeline": [
+      { "el": "path", "d": "M3 7h10M3 12h18M3 17h7" },
+      { "el": "path", "d": "M15 4v16", "tone": "accent" }
+    ],
+    "assets": [
+      { "el": "rect", "x": 3, "y": 4, "width": 18, "height": 16, "rx": 2 },
+      { "el": "path", "d": "M3 16l5-5 4 4 3-3 6 6" },
+      { "el": "circle", "cx": 16, "cy": 9, "r": 1.5, "tone": "accent", "fill": true }
+    ],
+    "render": [
+      { "el": "path", "d": "M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" },
+      { "el": "circle", "cx": 12, "cy": 12, "r": 1.6, "tone": "accent", "fill": true }
+    ],
+    "share": [
+      { "el": "path", "d": "M12 15V3M7 8l5-5 5 5" },
+      { "el": "path", "d": "M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" },
+      { "el": "circle", "cx": 12, "cy": 3, "r": 1, "tone": "accent", "fill": true }
+    ],
+    "approve": [
+      { "el": "circle", "cx": 12, "cy": 12, "r": 9 },
+      { "el": "path", "d": "M8 12.5l2.7 2.7L16.5 9", "tone": "accent" }
+    ],
+    "comment": [
+      { "el": "path", "d": "M4 5h16v11H10l-5 4v-4H4z" },
+      { "el": "path", "d": "M8 9.5h8M8 12.5h5" }
+    ],
+    "agent": [
+      { "el": "path", "d": "M12 3c.6 4.6 3.4 7.4 8 8-4.6.6-7.4 3.4-8 8-.6-4.6-3.4-7.4-8-8 4.6-.6 7.4-3.4 8-8z" },
+      { "el": "circle", "cx": 19, "cy": 5, "r": 1.4, "tone": "accent", "fill": true }
+    ],
+    "data": [
+      { "el": "ellipse", "cx": 12, "cy": 6, "rx": 7, "ry": 2.5 },
+      { "el": "path", "d": "M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5" }
+    ],
+    "cloud": [
+      { "el": "path", "d": "M7 18a4 4 0 0 1-.6-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z" }
+    ],
+    "secure": [
+      { "el": "path", "d": "M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" },
+      { "el": "path", "d": "M9 12l2 2 4-4", "tone": "accent" }
+    ],
+    "growth": [
+      { "el": "path", "d": "M3 17l6-6 4 4 8-8" },
+      { "el": "path", "d": "M15 7h6v6", "tone": "accent" }
+    ],
+    "connect": [
+      { "el": "circle", "cx": 5, "cy": 12, "r": 2 },
+      { "el": "circle", "cx": 19, "cy": 6, "r": 2 },
+      { "el": "circle", "cx": 19, "cy": 18, "r": 2 },
+      { "el": "path", "d": "M7 11l10-4M7 13l10 4" },
+      { "el": "circle", "cx": 5, "cy": 12, "r": 0.8, "tone": "accent", "fill": true }
+    ],
+    "table": [
+      { "el": "rect", "x": 4, "y": 4, "width": 16, "height": 16, "rx": 2 },
+      { "el": "path", "d": "M9 4v16M4 9h16" },
+      { "el": "rect", "x": 9, "y": 9, "width": 11, "height": 11, "tone": "accent", "fill": true, "opacity": 0.14 }
+    ],
+    "time": [
+      { "el": "circle", "cx": 12, "cy": 12, "r": 9 },
+      { "el": "path", "d": "M12 7v5l3 2" }
+    ],
+    "alert": [
+      { "el": "path", "d": "M12 4l9 16H3z" },
+      { "el": "path", "d": "M12 10v4" },
+      { "el": "circle", "cx": 12, "cy": 17, "r": 0.9, "tone": "accent", "fill": true }
+    ],
+    "team": [
+      { "el": "circle", "cx": 9, "cy": 8, "r": 3.5 },
+      { "el": "path", "d": "M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" },
+      { "el": "path", "d": "M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .8 3 3 3 6", "tone": "accent" }
+    ],
+    "fast": [
+      { "el": "path", "d": "M13 3L5 14h6l-1 7 8-11h-6z" }
+    ],
+    "package": [
+      { "el": "path", "d": "M12 3l8 4.5v9L12 21l-8-4.5v-9z" },
+      { "el": "path", "d": "M4 7.5l8 4.5 8-4.5M12 12v9" }
+    ],
+    "search": [
+      { "el": "circle", "cx": 11, "cy": 11, "r": 6.5 },
+      { "el": "path", "d": "M16 16l4.5 4.5", "tone": "accent" }
+    ]
+  }
+}

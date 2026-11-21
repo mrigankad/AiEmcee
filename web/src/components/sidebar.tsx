@@ -1,33 +1,38 @@
 "use client";
 
-import { Clapperboard, FileText, GitBranch, Link2, ListChecks, MessageSquare, RotateCw, Search, SquarePlay, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { api, can, type Job, type Project } from "@/lib/api";
 import { useLive } from "@/lib/live";
+import { CountUp } from "@/lib/motion";
 import { useSession } from "@/lib/session";
 
 import { Logo } from "./brand";
+import { Glyph, type GlyphName } from "./glyph";
 
-export const FILM_TABS = [
-  { tab: "editor", label: "Editor", icon: SquarePlay },
-  { tab: "script", label: "Script", icon: FileText },
-  { tab: "review", label: "Review", icon: MessageSquare },
-  { tab: "versions", label: "Versions", icon: GitBranch },
-  { tab: "share", label: "Share", icon: Link2 },
-  { tab: "jobs", label: "Jobs", icon: ListChecks },
-] as const;
+export const FILM_TABS: { tab: string; label: string; icon: GlyphName }[] = [
+  { tab: "editor", label: "Editor", icon: "film" },
+  { tab: "boards", label: "Boards", icon: "boards" },
+  { tab: "script", label: "Script", icon: "script" },
+  { tab: "review", label: "Review", icon: "comment" },
+  { tab: "versions", label: "Versions", icon: "time" },
+  { tab: "share", label: "Share", icon: "share" },
+  { tab: "jobs", label: "Jobs", icon: "render" },
+];
 
-function Item({ href, icon: Icon, label, count, on, badge }: { href: string; icon: typeof Search; label: string; count?: string | number; on: boolean; badge?: React.ReactNode }) {
+/** Boards is its own route; every other tab is a ?tab= on the film page. */
+export const tabHref = (film: string, tab: string) => `/p/${encodeURIComponent(film)}${tab === "boards" ? "/boards" : tab === "editor" ? "" : `?tab=${tab}`}`;
+
+function Item({ href, icon, label, count, on, badge }: { href: string; icon: GlyphName; label: string; count?: string | number; on: boolean; badge?: React.ReactNode }) {
   return (
     <Link
       href={href}
       aria-current={on ? "page" : undefined}
       className={`flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[14px] transition ${on ? "border border-line bg-page font-bold text-ink shadow-[0_1px_2px_#16181d0d]" : "border border-transparent text-ink hover:bg-sunk"}`}
     >
-      <Icon size={16} strokeWidth={1.75} className={on ? "text-ink" : "text-body"} />
+      <Glyph name={icon} size={16} className={on ? "text-ink" : "text-body"} />
       <span className="flex-1 truncate">{label}</span>
       {badge}
       {count != null && count !== "" && <span className="tabular text-[12px] text-mute">{count}</span>}
@@ -54,7 +59,7 @@ export function Sidebar() {
   useLive(["job"], load);
 
   const film = path.startsWith("/p/") ? decodeURIComponent(path.split("/")[2] ?? "") : null;
-  const tab = params.get("tab") ?? "editor";
+  const tab = path.endsWith("/boards") ? "boards" : (params.get("tab") ?? "editor");
   const hits = q ? projects.filter((p) => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : [];
 
   return (
@@ -67,7 +72,7 @@ export function Sidebar() {
 
       <div className="relative">
         <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-page px-3">
-          <Search size={14} className="text-mute" />
+          <Glyph name="search" size={14} className="text-mute" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -93,23 +98,30 @@ export function Sidebar() {
         )}
       </div>
 
+      {can(me, "editor") && (
+        <Link href="/new" className="flex h-9 items-center justify-center gap-2 rounded-lg btn-orb text-[14px]">
+          <Glyph name="film" size={15} accent="#fff" className="text-white" />
+          New film
+        </Link>
+      )}
+
       <nav className="flex flex-col gap-0.5">
-        <Item href="/" icon={Clapperboard} label="Films" count={projects.length || ""} on={path === "/"} />
+        <Item href="/" icon="film" label="Films" count={projects.length || ""} on={path === "/"} />
         <Item
           href="/renders"
-          icon={RotateCw}
+          icon="render"
           label="Renders"
           on={path === "/renders"}
-          badge={active ? <span className="tabular rounded-full bg-warn-bg px-1.5 text-[11px] font-bold text-warn">{active}</span> : null}
+          badge={active ? <span className="tabular rounded-full bg-warn-bg px-1.5 text-[11px] font-bold text-warn"><CountUp value={active} /></span> : null}
         />
-        {can(me, "owner") && <Item href="/team" icon={Users} label="Team" on={path === "/team"} />}
+        {can(me, "owner") && <Item href="/team" icon="team" label="Team" on={path === "/team"} />}
       </nav>
 
       {film && (
         <nav className="flex flex-col gap-0.5">
           <div className="truncate px-2.5 pt-2 pb-1 text-[11px] font-bold tracking-[0.08em] text-mute uppercase">This film · {film}</div>
           {FILM_TABS.map((t) => (
-            <Item key={t.tab} href={`/p/${encodeURIComponent(film)}${t.tab === "editor" ? "" : `?tab=${t.tab}`}`} icon={t.icon} label={t.label} on={tab === t.tab} />
+            <Item key={t.tab} href={tabHref(film, t.tab)} icon={t.icon} label={t.label} on={tab === t.tab} />
           ))}
         </nav>
       )}

@@ -133,6 +133,10 @@ export const DEFAULTS = {
   outro: null,
   poster: null,
 
+  // Film style for template and board scenes (remotion/src/templates/catalog.json):
+  // null = boards.json's style, else the catalog default. docs/15-styles-and-boards.md.
+  style: null,
+
   sequence: [],
 
   /**

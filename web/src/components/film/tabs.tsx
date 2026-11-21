@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Copy, ExternalLink, MessageSquareReply, RotateCcw, Sparkles, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, Copy, ExternalLink, MessageSquareReply, RotateCcw, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { Ctx } from "@/app/p/[project]/studio";
 import {
@@ -20,9 +20,11 @@ import {
   withToken,
 } from "@/lib/api";
 import { useLive } from "@/lib/live";
+import { useEntrance } from "@/lib/motion";
 import { useSession } from "@/lib/session";
 import { toast, toastError } from "@/lib/toast";
 
+import { Glyph } from "../glyph";
 import { Button, Card, Empty, Input, Kicker, Pill } from "../ui";
 
 function useLoad<T>(load: () => Promise<T>, live: string[], project: string) {
@@ -339,7 +341,7 @@ export function ReviewTab({ ctx }: { ctx: Ctx }) {
                     );
                   }}
                 >
-                  <Sparkles size={15} />
+                  <Glyph name="agent" size={15} />
                 </IconBtn>
               )}
               <IconBtn label={c.status === "resolved" ? "Reopen" : "Resolve"} onClick={() => patch(c.id, { status: c.status === "resolved" ? "open" : "resolved" })}>
@@ -642,14 +644,17 @@ export function JobList({ project, watch, setWatch }: { project?: string; watch:
   // This session's jobs first, then the project's history from earlier sessions (ids restart per session).
   const rows = [...jobs, ...history.filter((h) => !jobs.some((j) => j.id === h.id && j.queued === h.queued))].slice(0, 40);
   const watched = rows.find((j) => j.id === watch);
+  const listRef = useRef<HTMLDivElement>(null);
+  useEntrance(listRef, "[data-row]", [rows.length], { y: 4, stagger: 0.02, duration: 0.2 });
 
   return (
     <div className="grid grid-cols-[minmax(0,320px)_1fr] gap-4 max-md:grid-cols-1">
-      <div className="flex flex-col gap-1">
+      <div ref={listRef} className="flex flex-col gap-1">
         {rows.length === 0 && <Empty>No renders yet.</Empty>}
         {rows.map((j) => (
           <button
             key={`${j.id}-${j.queued}`}
+            data-row
             type="button"
             onClick={() => (j.tail && !jobs.some((x) => x.id === j.id) ? (setWatch(null), setLog(j.tail)) : setWatch(j.id))}
             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] ${j.id === watch ? "bg-sunk" : "hover:bg-rail"}`}

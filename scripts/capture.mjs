@@ -26,6 +26,7 @@ import { pathToFileURL } from "node:url";
 
 import { at, ensureDir, loadConfig, loadDurations, resetDir, show } from "./lib/config.mjs";
 import { Scene, cursorInitScript } from "./lib/scene.mjs";
+import { applyProfile } from "./lib/resources.mjs";
 import { assemble, startScreencast } from "./lib/screencast.mjs";
 
 const { config } = await loadConfig();
@@ -58,7 +59,12 @@ for (const scene of planned) {
   }
 }
 
-const { viewport, deviceScaleFactor: dsf = 1 } = config.capture;
+const machine = applyProfile();
+// A draft capture (--draft) under the lean profile records at 1x: a quarter of
+// the pixels of a dsf-2 master, so a quarter of the frame memory and disk.
+const draft = process.argv.includes("--draft") || process.env.AIEMCEE_CAPTURE_DRAFT === "1";
+const { viewport } = config.capture;
+const dsf = draft && machine.captureScale ? Math.min(config.capture.deviceScaleFactor ?? 1, machine.captureScale) : (config.capture.deviceScaleFactor ?? 1);
 console.log(
   `recording ${planned.length} scene(s) against ${config.capture.baseUrl}\n` +
     `mode ${mode}, viewport ${viewport.width}x${viewport.height} @ dsf ${dsf}` +
@@ -76,6 +82,7 @@ const { chromium } = await import("playwright");
 // at dsf 2). A real device scale factor makes it return physical pixels.
 const launchArgs = [
   ...config.capture.launchArgs,
+  ...machine.chromiumArgs.filter((a) => !config.capture.launchArgs.some((b) => b.split("=")[0] === a.split("=")[0])),
   ...(mode === "screencast" && dsf !== 1 ? [`--force-device-scale-factor=${dsf}`] : []),
 ];
 const browser = await chromium.launch({ args: launchArgs });
@@ -147,6 +154,8 @@ for (const entry of planned) {
     const dest = path.join(outDir, `${id}.mp4`);
     const t = Date.now();
     console.log(head);
+    // Lean: one encode at a time, so Chromium and two ffmpegs never peak together.
+    if (machine.name === "lean") await Promise.allSettled(assembling);
     // Assemble in the background; the next scene starts recording now.
     assembling.push(
       (async () => {

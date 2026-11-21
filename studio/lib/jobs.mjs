@@ -8,11 +8,17 @@
  *   versions   a successful compose snapshots the source that produced the film
  */
 import { spawn, spawnSync } from "node:child_process";
+import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { publish } from "./events.mjs";
 import { readJson, stateDir, writeJson } from "./store.mjs";
 import { snapshot } from "./versions.mjs";
+
+// The machine's resource profile, resolved as each job starts and pinned in its
+// env so all of its stages agree (scripts/lib/resources.mjs).
+const { resourceProfile } = await import(pathToFileURL(path.join(import.meta.dirname, "..", "..", "scripts", "lib", "resources.mjs")).href);
 
 const STAGES = new Set(["doctor", "validate", "narrate", "clip", "capture", "compose", "film"]);
 const FLAGS = new Set(["--draft", "--fast", "--sound-only", "--all", "--if-changed"]);
@@ -78,7 +84,7 @@ export function createQueue({ bin, cwd, resolveProject }) {
     try {
       child = spawn(process.execPath, [bin, next.stage, "--project", resolveProject(next.project), ...next.flags], {
         cwd,
-        env: { ...process.env, FORCE_COLOR: "0" },
+        env: { ...process.env, FORCE_COLOR: "0", AIEMCEE_PROFILE: resourceProfile().name },
         windowsHide: true,
         // Its own process group on POSIX, so cancel can end ffmpeg and Chromium too.
         detached: process.platform !== "win32",
@@ -90,6 +96,13 @@ export function createQueue({ bin, cwd, resolveProject }) {
       return pump();
     }
     next.child = child;
+    // A render must never make the studio (or the rest of the laptop) stutter:
+    // stages run below normal priority, and their ffmpeg/Chromium inherit it.
+    try {
+      if (child.pid) os.setPriority(child.pid, os.constants.priority.PRIORITY_BELOW_NORMAL);
+    } catch {
+      /* not permitted here; the job still runs */
+    }
     const done = (code) => {
       if (running !== next) return; // already handled (close after error)
       if (next.status === "running") finish(next, code === 0 ? "done" : "failed", code);

@@ -6,8 +6,9 @@
  *   grok     xAI, OpenAI-compatible        XAI_API_KEY         model: AIEMCEE_XAI_MODEL
  *
  * Every provider gets the same tools, all scoped to one project directory:
- * list and read files, write project files, run a pipeline stage, and read the
- * timeline. Adding a provider means writing one `turn` function; the tools,
+ * list and read files, write project files, run a pipeline stage, read the
+ * timeline, and read / edit the film's boards (lib/boards.mjs, the same ops
+ * as POST /api/projects/:p/boards/ops). Adding a provider means writing one `turn` function; the tools,
  * the sandbox and the stage runner are shared.
  */
 import { execFileSync } from "node:child_process";
@@ -15,6 +16,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import { applyToProject, loadCatalog, readBoards } from "./lib/boards.mjs";
 import { publish } from "./lib/events.mjs";
 
 export const PROVIDERS = {
@@ -40,7 +42,17 @@ video.config.mjs holds the sequence, focus moves, titles, transitions and sound.
 You work on one project. Read files before you change them, keep edits small and valid, and keep the
 JSON valid. After an edit, run the cheapest stage that shows it: narrate for script changes,
 compose with --draft for a quick look, compose with --fast for a deliverable. Images the user attaches
-are saved under assets/uploads/ and can be referenced from the config. Be concise.`;
+are saved under assets/uploads/ and can be referenced from the config.
+
+Boards: boards.json holds motion scenes as data. A board is { id, template, style?, props, status
+(draft|approved), notes? }. Templates: hero (headline), pipeline (3-6 steps), stack (2-5 layers),
+metrics (1-4 numbers), endcard (title). Styles (iso-clay, iso-blueprint, swiss, glass, hand-drawn,
+dark-cinematic) all draw the same templates and props, so changing style never means rewriting props.
+A sequence entry { id, from: "board" } plays the board with that id; its narration.json line sets its
+length. Use boards_catalog for the exact props and examples, boards_get to read, and boards_apply to
+change boards (never write boards.json directly): adding or removing a board also adds or removes its
+narration line and sequence entry. Write real narration for new boards; their first line is a placeholder.
+Leave status alone unless the user approves a board. Be concise.`;
 
 const TOOLS = [
   {
@@ -72,6 +84,45 @@ const TOOLS = [
     },
   },
 ];
+
+TOOLS.push(
+  {
+    name: "boards_catalog",
+    description: "The style catalog: every template (id, description, beat names, example props) and every style (id, label, tone, best for).",
+    schema: { type: "object", properties: {}, required: [], additionalProperties: false },
+  },
+  {
+    name: "boards_get",
+    description: "Read this film's boards.json: { version, style?, boards: [{ id, template, style?, props, status, notes? }] }.",
+    schema: { type: "object", properties: {}, required: [], additionalProperties: false },
+  },
+  {
+    name: "boards_apply",
+    description:
+      "Change boards with a list of ops, applied all or nothing. Ops: { op: 'add', board: { id?, template, style?, props?, status?, notes? }, index? } (props default to the template's example; id defaults to NN-<template>); { op: 'update', id, patch: { template?, style?, props?, status?, notes? } } (props deep-merge, arrays replace, null deletes a key); { op: 'remove', id }; { op: 'move', id, index }. Returns the new boards.json and what was synced.",
+    schema: {
+      type: "object",
+      properties: {
+        ops: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              op: { type: "string", enum: ["add", "update", "remove", "move"] },
+              id: { type: "string" },
+              index: { type: "integer" },
+              board: { type: "object" },
+              patch: { type: "object" },
+            },
+            required: ["op"],
+          },
+        },
+      },
+      required: ["ops"],
+      additionalProperties: false,
+    },
+  },
+);
 
 const GENERATED = new Set(["node_modules", "tts", "raw", "work", "out"]);
 const WRITABLE = /\.(json|mjs|js|ts|tsx|md|css|html)$/i;
@@ -120,6 +171,16 @@ function makeTools(project, runStage) {
       fs.writeFileSync(full, content);
       publish("file", { project: path.basename(project), name: rel, by: "rasa" });
       return `wrote ${rel} (${content.length} chars)`;
+    },
+    boards_catalog() {
+      return JSON.stringify(loadCatalog(), null, 2);
+    },
+    boards_get() {
+      return JSON.stringify(readBoards(project), null, 2);
+    },
+    boards_apply({ ops }) {
+      const { boards, sync } = applyToProject(project, ops, { by: "rasa" });
+      return JSON.stringify({ boards, sync }, null, 2);
     },
     async run_stage({ stage, flags = [] }) {
       const job = await runStage(stage, flags);

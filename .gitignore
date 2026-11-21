@@ -70,3 +70,6 @@ thumbs/
 youtube-listings.md
 *-tmp.mjs
 *.tmp.mjs
+
+# Desktop build output (node desktop/build.mjs)
+dist/

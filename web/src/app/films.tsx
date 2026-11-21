@@ -1,14 +1,15 @@
 "use client";
 
-import { Clapperboard, Plus } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Rasa } from "@/components/brand";
+import { Glyph } from "@/components/glyph";
 import { Select } from "@/components/select";
 import { Card, Pill } from "@/components/ui";
 import { ago, api, clock, type Job, type Project, withToken } from "@/lib/api";
 import { useLive } from "@/lib/live";
+import { CountUp, useEntrance, useFlip } from "@/lib/motion";
 
 type Filter = "all" | "rendered" | "unrendered";
 type Sort = "recent" | "name" | "longest" | "shortest";
@@ -52,6 +53,12 @@ export function Films() {
     return m;
   }, [jobs]);
 
+  const grid = useRef<HTMLDivElement>(null);
+  const page = useRef<HTMLDivElement>(null);
+  const flip = useFlip(grid, "[data-film]");
+  useEntrance(page, "[data-enter]", []);
+  useEntrance(grid, "[data-film]", [projects], { y: 10 });
+
   const shipped = projects?.filter((p) => p.updated > month) ?? [];
   const minutes = shipped.reduce((t, p) => t + (p.seconds ?? 0), 0) / 60;
   const list = (projects ?? [])
@@ -60,8 +67,8 @@ export function Films() {
 
   return (
     <main className="flex-1 overflow-auto">
-      <div className="mx-auto flex max-w-[1180px] flex-col gap-8 px-8 py-7 max-md:px-4">
-        <section className="grid grid-cols-[1fr_360px] gap-6 max-lg:grid-cols-1">
+      <div ref={page} className="mx-auto flex max-w-[1180px] flex-col gap-8 px-8 py-7 max-md:px-4">
+        <section data-enter className="grid grid-cols-[1fr_360px] gap-6 max-lg:grid-cols-1">
           <div className="flex flex-col justify-center gap-4 rounded-2xl bg-peach px-6 py-6">
             <div className="flex items-center gap-3">
               <Rasa size={28} />
@@ -70,8 +77,14 @@ export function Films() {
             <p className="max-w-xl text-[15px] text-body">
               Open a film to direct it with Rasa: rewrite the script, move a focus, preview a scene in a couple of seconds, then send it for review and share it.
             </p>
-            <div className="text-[13px] text-body">
-              New film from the terminal: <code className="rounded bg-page px-1.5 py-0.5 text-ink">aiemcee init projects/&lt;name&gt;</code>
+            <div className="flex flex-wrap items-center gap-3 text-[13px] text-body">
+              <Link href="/new" className="btn-orb inline-flex h-9 items-center gap-2 rounded-lg px-4 text-[14px]">
+                <Glyph name="boards" size={15} accent="#fff" className="text-white" />
+                New film
+              </Link>
+              <span>
+                or from the terminal: <code className="rounded bg-page px-1.5 py-0.5 text-ink">aiemcee init projects/&lt;name&gt;</code>
+              </span>
             </div>
           </div>
           <div className="grid grid-rows-3 gap-3 max-lg:grid-cols-3 max-lg:grid-rows-1 max-sm:grid-cols-1">
@@ -81,17 +94,23 @@ export function Films() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-4">
+        <section data-enter className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-[20px] font-bold">All films</h2>
             <span className="tabular text-[14px] text-mute">{projects?.length ?? ""}</span>
             <div className="flex-1" />
-            <Select label="Sort" showLabel align="right" value={sort} onChange={setSort} className="w-[230px]" options={SORT_OPTIONS} />
+            <Select label="Sort" showLabel align="right" value={sort} onChange={(v) => {
+                flip();
+                setSort(v);
+              }} className="w-[230px]" options={SORT_OPTIONS} />
             {(["all", "rendered", "unrendered"] as Filter[]).map((f) => (
               <button
                 key={f}
                 type="button"
-                onClick={() => setFilter(f)}
+                onClick={() => {
+                  flip();
+                  setFilter(f);
+                }}
                 aria-pressed={filter === f}
                 className={`h-8 rounded-full border px-3.5 text-[14px] transition ${filter === f ? "border-ink bg-ink text-white" : "border-line text-ink hover:border-line-strong"}`}
               >
@@ -107,16 +126,18 @@ export function Films() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-4 gap-y-6">
+            <div ref={grid} className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-4 gap-y-6">
               {list.map((p) => (
                 <FilmCard key={p.name} p={p} job={busy.get(p.name)} />
               ))}
-              <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line-strong text-center text-[14px] text-body">
-                <Plus size={20} className="text-action" />
-                <span>
-                  New film: <code className="rounded bg-sunk px-1">aiemcee init</code>
-                </span>
-              </div>
+              <Link
+                href="/new"
+                data-film
+                className="flex aspect-video flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line-strong text-center text-[14px] text-body transition-colors hover:border-action hover:text-ink"
+              >
+                <Glyph name="boards" size={22} />
+                <span>New film from a style</span>
+              </Link>
             </div>
           )}
         </section>
@@ -132,21 +153,21 @@ function Stat({ label, value, detail, tone = "ink" }: { label: string; value: nu
         <div className="text-[13px] text-mute">{label}</div>
         <div className="truncate text-[15px]">{detail}</div>
       </div>
-      <div className={`tabular text-[32px] leading-none font-bold ${tone === "action" ? "text-action" : "text-ink"}`}>{value}</div>
+      <CountUp value={value} className={`tabular text-[32px] leading-none font-bold ${tone === "action" ? "text-action" : "text-ink"}`} />
     </Card>
   );
 }
 
 function FilmCard({ p, job }: { p: Project; job?: Job }) {
   return (
-    <Link href={`/p/${encodeURIComponent(p.name)}`} className="group flex flex-col gap-2">
+    <Link href={`/p/${encodeURIComponent(p.name)}`} data-film className="group flex flex-col gap-2">
       <div className="relative aspect-video overflow-hidden rounded-card bg-ink">
         {p.poster ? (
           // eslint-disable-next-line @next/next/no-img-element -- served by the studio, sized by CSS
           <img src={withToken(`${p.poster}?t=${p.updated}`)} alt="" loading="lazy" className="size-full object-cover transition duration-300 group-hover:scale-[1.03]" />
         ) : (
-          <div className="grid size-full place-items-center bg-gradient-to-br from-[#2a1a12] to-ink">
-            <Clapperboard size={28} className="text-white/40" />
+          <div className="grid size-full place-items-center bg-ink">
+            <Glyph name="film" size={28} className="text-white/40" />
           </div>
         )}
         <div className="absolute top-2.5 right-2.5">

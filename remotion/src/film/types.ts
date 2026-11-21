@@ -72,7 +72,18 @@ type SegmentBase = {
 };
 
 export type VideoSegment = SegmentBase & { kind: "video"; src: string; srcDuration: number };
-export type MotionSegment = SegmentBase & { kind: "motion"; composition: string };
+/**
+ * A motion scene: either a registered composition (scenes.ts / local.tsx), or a
+ * style template (templates/registry.ts) drawn with `props`. The timeline
+ * writer resolves `style` (entry, board, boards.json, config, catalog default).
+ */
+export type MotionSegment = SegmentBase & {
+  kind: "motion";
+  composition?: string;
+  template?: "hero" | "pipeline" | "stack" | "metrics" | "endcard";
+  style?: string;
+  props?: Record<string, unknown>;
+};
 /**
  * A still image with a gentle camera move (Ken Burns): zoom from `zoom[0]` to
  * `zoom[1]` while the centre travels from `pan[0]` to `pan[1]` (fractions of the

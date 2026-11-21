@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-11-21
+
+### Added
+
+- **Film styles and scene templates** ([docs/15-styles-and-boards.md](docs/15-styles-and-boards.md)).
+  - Six styles: isometric clay, isometric blueprint, Swiss kinetic type, product UI glass, hand-drawn line and dark cinematic.
+  - Each style draws the same five templates (hero, pipeline, stack, metrics, end card) with the same props.
+  - Sequence entries take `template`, `style` and `props`; a film-level `style` sets the default.
+  - Preview compositions `tpl-<style>-<template>`, and a smoke test that renders all 30 (`node scripts/templates.test.mjs`).
+- **Boards.** A board is one scene as data, kept in `boards.json`; `{ id, from: "board" }` renders it in the film.
+  - The studio API adds `GET /api/styles`, `POST /api/projects` (scaffolds a board film in a style), the boards API with add, update, remove, move and style ops (logged and undoable), and PNG previews per board.
+  - Rasa gets `boards_get`, `boards_catalog` and `boards_apply`.
+- **Web studio.**
+  - A New film page with a style picker and template previews.
+  - A Boards page: board rail, live preview canvas with pan and zoom, beat strip, a per-template inspector, and the agent's ops, live over SSE.
+- **GSAP motion.** Templates build one paused timeline that the frame clock seeks (`remotion/src/motion/gsap.ts`), with SplitText, DrawSVG, MorphSVG, MotionPath and house eases. The web studio uses GSAP for entrances, Flip, count-ups and the canvas.
+- **Emcee Glyphs**, our own icon set: 24 glyphs on a 24 px grid (`assets/glyphs/emcee-glyphs.json`), drawn in the film and in the studio.
+- **Lean mode** for 8 GB machines (`AIEMCEE_PROFILE`, `--lean` / `--standard`, automatic below 12 GB). It renders with 2 pages in one Chromium, small caches, 1× draft captures and below-normal priority; on the smoke film, peak memory roughly halves. Studio jobs always run at below-normal priority.
+- **`AiEmcee.exe`**: a Node single-executable launcher (`npm run build:exe`). It starts the studio, opens it in an Edge app window and keeps a single instance ([docs/16-desktop-and-memory.md](docs/16-desktop-and-memory.md)).
+- A competitive landscape report ([docs/research/2026-11-competitive-landscape.md](docs/research/2026-11-competitive-landscape.md)).
+
+### Fixed
+
+- Projects created outside the repo's own `projects/` folder now find the engine.
+- Editing glyph data alone now invalidates the render cache.
+
 ## [1.2.1] — 2026-11-13
 
 ### Added
@@ -246,7 +272,9 @@ with its script, durations and choreography annotated.
 - No generated media is committed. `raw/`, `tts/`, `work/`, `out/` and
   `remotion/out/` all rebuild from source.
 
-[Unreleased]: https://github.com/mrigankad/AiEmcee/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/mrigankad/AiEmcee/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/mrigankad/AiEmcee/compare/v1.2.1...v1.3.0
+[1.2.1]: https://github.com/mrigankad/AiEmcee/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mrigankad/AiEmcee/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/mrigankad/AiEmcee/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mrigankad/AiEmcee/releases/tag/v1.0.0

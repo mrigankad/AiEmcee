@@ -31,6 +31,7 @@ import { fileURLToPath } from "node:url";
 
 import { ensureDir, posix } from "./config.mjs";
 import { ff } from "./ffmpeg.mjs";
+import { applyProfile } from "./resources.mjs";
 import { motionBundle } from "./motion/bundle.mjs";
 import { openMotion, pagePool, renderSplit, selectComposition } from "./motion/render.mjs";
 import { assertScenesInstalled, REMOTION_DIR } from "./remotion.mjs";
@@ -120,6 +121,9 @@ export function codeHash() {
     h.update(fs.readFileSync(file));
   }
   h.update(fs.readFileSync(path.join(REMOTION_DIR, "package.json")));
+  // Scenes import the glyph data from outside src/, so it is code too.
+  const glyphs = path.join(REMOTION_DIR, "..", "assets", "glyphs", "emcee-glyphs.json");
+  if (fs.existsSync(glyphs)) h.update(fs.readFileSync(glyphs));
   return h.digest("hex");
 }
 
@@ -321,7 +325,11 @@ export async function renderFast({ config, timeline, media, film, workDir, profi
   // Render pages. Each page also drives an ffmpeg decoder and encoder, so the
   // machine saturates near half its threads: measured on 12 threads, 4-6 pages
   // beat 8. `render.pages` (or the profile's `pages`) overrides.
-  const tabs = profile.pages ?? config.render?.pages ?? profile.concurrency ?? config.render?.fastConcurrency ?? Math.max(2, Math.round(cores / 2));
+  // The machine's resource profile (scripts/lib/resources.mjs): lean caps the pages
+  // at 2 in one Chromium, whatever the project asks for.
+  const machine = applyProfile();
+  const asked = profile.pages ?? config.render?.pages ?? profile.concurrency ?? config.render?.fastConcurrency ?? Math.max(2, Math.round(cores / 2));
+  const tabs = machine.name === "lean" ? Math.min(asked, machine.renderConcurrency) : asked;
 
   const stillJob = async (c) => {
     const t = Date.now();
@@ -330,7 +338,7 @@ export async function renderFast({ config, timeline, media, film, workDir, profi
     console.log(`  still  ${c.name.padEnd(28)} ${String(c.b - c.a).padStart(5)}f  ${((Date.now() - t) / 1000).toFixed(1)}s`);
   };
   // ffmpeg stills run alongside the browser, two at a time (each is multithreaded).
-  const stills = pool(native, 2, stillJob);
+  const stills = pool(native, machine.name === "lean" ? 1 : 2, stillJob);
 
   if (remote.length) {
     const t0 = Date.now();
@@ -347,6 +355,7 @@ export async function renderFast({ config, timeline, media, film, workDir, profi
       height: timeline.height,
       scale,
       pages,
+      ...(machine.browsers ? { browsers: machine.browsers } : {}),
       gl: config.render?.gl ?? null,
     });
     console.log(`motion   ${pages} pages ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);

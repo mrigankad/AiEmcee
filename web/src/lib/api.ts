@@ -128,3 +128,36 @@ export function ago(ms: number) {
   return `${Math.floor(s / 86400 / 7)} w ago`;
 }
 export const when = (iso: string) => new Date(iso).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+/* ---------------------------------------------------------------- */
+/* Styles and templates (GET /api/styles returns catalog.json)       */
+/* ---------------------------------------------------------------- */
+export type Template = {
+  id: string;
+  label: string;
+  description: string;
+  beats: Record<string, string>;
+  example: Record<string, unknown>;
+};
+export type Style = {
+  id: string;
+  label: string;
+  description: string;
+  bestFor: string;
+  tone: "light" | "dark";
+  /** [background, ink, accent] */
+  swatch: [string, string, string];
+};
+export type Catalog = { version: number; defaultStyle: string; templates: Template[]; styles: Style[] };
+export type NewProject = { name: string; title?: string; style?: string; brief?: string; baseUrl?: string };
+
+export const getStyles = () => api<Catalog>("/api/styles");
+export const createProject = (body: NewProject) => api<{ name: string }>("/api/projects", { method: "POST", json: body });
+/** The folder name the server will use: lowercase, dashes. */
+export const slug = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);

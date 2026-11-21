@@ -28,10 +28,13 @@ A studio with users asks each browser for its token once.
 | --- | --- |
 | `src/app/page.tsx`, `films.tsx` | Films: every project, posters, status, sort and filter |
 | `src/app/p/[project]/` | the film workspace: player, scene strip, tabs, Rasa |
+| `src/app/new/` | New film: title, brief, style and its scene templates; creates the project and opens its boards |
 | `src/app/renders/`, `src/app/team/` | the job queue; people and roles |
 | `src/components/film/` | player, tabs (editor, script, review, versions, share, jobs), chat |
 | `src/components/` | sidebar, top bar, select, buttons and the brand marks |
 | `src/lib/api.ts` | the API client and the types it shares with the server |
+| `src/components/glyph.tsx` | Emcee Glyphs. `src/lib/emcee-glyphs.json` is a copy of `../assets/glyphs/emcee-glyphs.json` made by `scripts/sync-glyphs.mjs` before dev and build (`npm run glyphs`); edit the source, not the copy |
+| `src/lib/motion.tsx` | GSAP helpers: `useEntrance`, `useFlip`, `CountUp`; transform and opacity only, off under reduced motion |
 | `src/lib/live.ts` | one shared event stream for live updates |
 | `src/lib/session.tsx` | who is signed in, what the studio can do |
 

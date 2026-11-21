@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "defaultStyle": "iso-clay",
+  "templates": [
+    {
+      "id": "hero",
+      "label": "Hero",
+      "description": "A headline beside one object that arrives on the key word.",
+      "beats": { "title": "headline lands", "object": "the object arrives" },
+      "example": {
+        "kicker": "Introducing",
+        "headline": "Every release, on the record.",
+        "sub": "Tests written from plain requirements, with proof for every check.",
+        "glyph": "secure"
+      }
+    },
+    {
+      "id": "pipeline",
+      "label": "Pipeline",
+      "description": "3 to 6 steps in a row; a marker travels from one to the next.",
+      "beats": { "title": "headline lands", "steps": "first step appears", "travel": "marker starts moving" },
+      "example": {
+        "kicker": "How it works",
+        "headline": "From requirement to proof",
+        "steps": [
+          { "label": "Read", "hint": "Plain requirements", "glyph": "script" },
+          { "label": "Plan", "hint": "Tests per check", "glyph": "boards" },
+          { "label": "Run", "hint": "Desktop and phone", "glyph": "fast" },
+          { "label": "Prove", "hint": "Evidence for each", "glyph": "approve" }
+        ]
+      }
+    },
+    {
+      "id": "stack",
+      "label": "Stack",
+      "description": "2 to 5 layers of an architecture drop in; one layer lights up.",
+      "beats": { "title": "headline lands", "layers": "first layer drops in", "highlight": "the lit layer glows" },
+      "example": {
+        "kicker": "Architecture",
+        "headline": "One engine, three layers",
+        "layers": [
+          { "label": "Studio", "hint": "Review and approve", "glyph": "boards" },
+          { "label": "Engine", "hint": "Voice, capture, motion", "glyph": "render" },
+          { "label": "Your data", "hint": "Stays on your machine", "glyph": "data" }
+        ],
+        "highlight": 1
+      }
+    },
+    {
+      "id": "metrics",
+      "label": "Metrics",
+      "description": "1 to 4 numbers that count up, each with a short label.",
+      "beats": { "title": "headline lands", "numbers": "numbers start counting" },
+      "example": {
+        "kicker": "Results",
+        "headline": "What changed in a quarter",
+        "metrics": [
+          { "value": 72, "suffix": "%", "label": "less manual testing" },
+          { "value": 3.4, "suffix": "x", "decimals": 1, "label": "faster releases" },
+          { "value": 0, "label": "AI calls to replay" }
+        ]
+      }
+    },
+    {
+      "id": "endcard",
+      "label": "End card",
+      "description": "Mark, name and one line.",
+      "beats": { "mark": "mark arrives", "title": "name lands" },
+      "example": {
+        "kicker": "Made with AiEmcee",
+        "title": "Your product",
+        "tagline": "Write the script, get the film.",
+        "mark": "film"
+      }
+    }
+  ],
+  "styles": [
+    {
+      "id": "iso-clay",
+      "label": "Isometric · Clay light",
+      "description": "Soft 2:1 blocks with no outlines and one hot accent; pieces pop on a spring and float.",
+      "bestFor": "systems, plants, flows",
+      "tone": "light",
+      "swatch": ["#F7F7F8", "#16181D", "#C9480A"]
+    },
+    {
+      "id": "iso-blueprint",
+      "label": "Isometric · Blueprint",
+      "description": "The same isometric geometry drawn as lines on a grid; strokes draw themselves on.",
+      "bestFor": "architecture, infrastructure",
+      "tone": "dark",
+      "swatch": ["#0E2A47", "#DCEBFF", "#FFC857"]
+    },
+    {
+      "id": "swiss",
+      "label": "Swiss kinetic type",
+      "description": "Huge grotesk words, one red, landing on the narration's beats.",
+      "bestFor": "launches, hooks",
+      "tone": "light",
+      "swatch": ["#FFFFFF", "#16181D", "#E5231B"]
+    },
+    {
+      "id": "glass",
+      "label": "Product UI · Glass",
+      "description": "Clean mock product screens with floating callouts; the camera glides between panels.",
+      "bestFor": "SaaS features",
+      "tone": "light",
+      "swatch": ["#EEF1F6", "#16181D", "#C9480A"]
+    },
+    {
+      "id": "hand-drawn",
+      "label": "Hand-drawn line",
+      "description": "Ink strokes draw on as the voice explains, like a whiteboard.",
+      "bestFor": "explainers, onboarding",
+      "tone": "light",
+      "swatch": ["#FFFDF7", "#1F2A44", "#2F7DF6"]
+    },
+    {
+      "id": "dark-cinematic",
+      "label": "Dark cinematic",
+      "description": "Lit 3D marks, slow push-ins and light sweeps, for the moment a product is named.",
+      "bestFor": "reveals, end cards",
+      "tone": "dark",
+      "swatch": ["#0B0C10", "#FFFFFF", "#FF8A1F"]
+    }
+  ]
+}

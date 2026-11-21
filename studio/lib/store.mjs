@@ -6,8 +6,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-/** The four files that define a film. Everything the studio edits is one of these. */
-export const SOURCE_FILES = ["narration.json", "scenes.mjs", "video.config.mjs", "design.tokens.json"];
+/** The files that define a film. Everything the studio edits is one of these (boards.json: docs/15-styles-and-boards.md). */
+export const SOURCE_FILES = ["narration.json", "scenes.mjs", "video.config.mjs", "design.tokens.json", "boards.json"];
 
 export function stateDir(project) {
   const dir = path.join(project, ".aiemcee");

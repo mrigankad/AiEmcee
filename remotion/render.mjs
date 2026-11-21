@@ -10,7 +10,6 @@
  * Output: remotion/out/<composition>.mp4, rendered on AiEmcee Motion.
  */
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -24,7 +23,9 @@ const { codeHash } = await lib("fast.mjs");
 const { ff } = await lib("ffmpeg.mjs");
 const { motionBundle } = await lib("motion/bundle.mjs");
 const { openMotion, pagePool, renderSplit, selectComposition } = await lib("motion/render.mjs");
+const { applyProfile } = await lib("resources.mjs");
 const { config } = await loadConfig();
+const machine = applyProfile();
 
 const outDir = path.join(here, "out");
 fs.mkdirSync(outDir, { recursive: true });
@@ -42,7 +43,7 @@ if (!todo.length) {
 }
 
 const bundleDir = await motionBundle(codeHash());
-const pages = Math.max(2, Math.round((os.availableParallelism?.() ?? os.cpus().length) / 2));
+const pages = config.render?.pages ?? machine.renderConcurrency;
 // Pages start at 1920x1080 and fit themselves to each composition as it mounts.
 const motion = await openMotion({
   bundleDir,
@@ -51,6 +52,7 @@ const motion = await openMotion({
   width: 1920,
   height: 1080,
   pages,
+  ...(machine.browsers ? { browsers: machine.browsers } : {}),
   gl: config.render?.gl ?? null,
 });
 try {

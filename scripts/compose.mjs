@@ -32,10 +32,16 @@ import path from "node:path";
 import { at, ensureDir, IS_PROJECT, loadConfig, loadDurations, PROJECT_NAME, resetDir, show } from "./lib/config.mjs";
 import { describeVideo, ff, ffprobeJson, probe } from "./lib/ffmpeg.mjs";
 import { REMOTION_DIR } from "./lib/remotion.mjs";
+import { applyProfile, lowerPriority } from "./lib/resources.mjs";
 import { posterTime, writeReview } from "./lib/review.mjs";
 import { mixSoundtrackAsync } from "./lib/sound-worker.mjs";
 import { buildTimeline } from "./lib/timeline.mjs";
 import { filmKey, pickMode, profileFor, renderFast, TO_BT709 } from "./lib/fast.mjs";
+
+// Resource profile first, so every Chromium and ffmpeg below inherits it.
+const machine = applyProfile();
+lowerPriority(0, machine);
+if (machine.name === "lean") console.log(`profile  lean (${machine.why}): ${machine.renderConcurrency} render pages, below-normal priority`);
 
 const args = process.argv.slice(2);
 const soundOnly = args.includes("--sound-only");

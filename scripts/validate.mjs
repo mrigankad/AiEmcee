@@ -13,7 +13,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { assetAt, at, engineAt, loadConfig } from "./lib/config.mjs";
-import { AVATAR_MODES, AVATAR_MOODS, avatarFor, normaliseTransition, resolveTone, TRANSITIONS } from "./lib/timeline.mjs";
+import { AVATAR_MODES, AVATAR_MOODS, avatarFor, CATALOG, loadBoards, normaliseTransition, resolveTemplateStyle, resolveTone, STYLE_IDS, TEMPLATE_IDS, TRANSITIONS } from "./lib/timeline.mjs";
 
 const problems = [];
 const notes = [];
@@ -39,6 +39,42 @@ for (const line of narration) {
   }
 }
 
+/* Template scenes: a known template and style, required props, list lengths in range. */
+let boards = null;
+try {
+  boards = loadBoards();
+} catch (err) {
+  problems.push(`boards.json: ${err.message}`);
+}
+const LISTS = { pipeline: ["steps", 3, 6], stack: ["layers", 2, 5], metrics: ["metrics", 1, 4] };
+const REQUIRED = { hero: ["headline"], pipeline: ["steps"], stack: ["layers"], metrics: ["metrics"], endcard: ["title"] };
+function checkTemplate(where, template, props, style) {
+  if (!TEMPLATE_IDS.includes(template)) {
+    problems.push(`${where} template "${template}" is not one of: ${TEMPLATE_IDS.join(", ")}`);
+    return;
+  }
+  if (!STYLE_IDS.includes(style)) problems.push(`${where} style "${style}" is not one of: ${STYLE_IDS.join(", ")}`);
+  for (const key of REQUIRED[template]) {
+    if (props[key] == null || props[key] === "") problems.push(`${where} (${template}) needs props.${key}`);
+  }
+  const list = LISTS[template];
+  if (list && props[list[0]] != null) {
+    const [key, min, max] = list;
+    const n = Array.isArray(props[key]) ? props[key].length : -1;
+    if (n < min || n > max) problems.push(`${where} (${template}) props.${key} needs ${min} to ${max} items, has ${n < 0 ? "none" : n}`);
+    else if (props[key].some((x) => !x || typeof x.label !== "string")) problems.push(`${where} (${template}) every item in props.${key} needs a label`);
+    if (template === "metrics" && props.metrics.some((m) => typeof m?.value !== "number")) problems.push(`${where} (metrics) every metric needs a numeric value`);
+  }
+}
+if (boards) {
+  if (boards.style != null && !STYLE_IDS.includes(boards.style)) problems.push(`boards.json style "${boards.style}" is not one of: ${STYLE_IDS.join(", ")}`);
+  for (const b of boards.boards) {
+    if (b.status != null && !["draft", "approved"].includes(b.status)) problems.push(`board "${b.id}" status "${b.status}" is not draft or approved`);
+    if (!inSequence.has(b.id)) notes.push(`board "${b.id}" is not in the sequence — it will not appear`);
+  }
+}
+if (config.style != null && !STYLE_IDS.includes(config.style)) problems.push(`config style "${config.style}" is not one of: ${STYLE_IDS.join(", ")} (catalog default: ${CATALOG.defaultStyle})`);
+
 /* Every captured scene needs a function in scenes.mjs. */
 const scenesFile = at(config.paths.scenes);
 const { SCENES } = await import(pathToFileURL(scenesFile).href);
@@ -47,10 +83,18 @@ for (const scene of config.sequence) {
   if (scene.from === "capture") {
     if (!SCENES[scene.id]) problems.push(`no choreography in scenes.mjs for "${scene.id}"`);
   } else if (scene.from === "motion") {
-    if (!scene.composition) problems.push(`"${scene.id}" is a motion scene with no composition`);
+    if (!scene.composition && !scene.template) problems.push(`"${scene.id}" is a motion scene with no composition or template`);
+    if (scene.composition && scene.template) problems.push(`"${scene.id}" names both a composition and a template — pick one`);
+    if (scene.template) checkTemplate(`"${scene.id}"`, scene.template, scene.props ?? {}, resolveTemplateStyle(config, scene, null, boards));
     if (scene.lowerThird) {
       problems.push(`"${scene.id}" is a motion scene — put its title in the composition, not a lower third`);
     }
+  } else if (scene.from === "board") {
+    const board = boards?.boards.find((b) => b.id === scene.id);
+    if (!boards) problems.push(`"${scene.id}" is a board scene, but there is no boards.json`);
+    else if (!board) problems.push(`"${scene.id}" is a board scene, but boards.json has no board "${scene.id}"`);
+    else checkTemplate(`board "${scene.id}"`, board.template, { ...(board.props ?? {}), ...(scene.props ?? {}) }, resolveTemplateStyle(config, scene, board, boards));
+    if (scene.lowerThird) problems.push(`"${scene.id}" is a board scene — put its title in the board, not a lower third`);
   } else if (scene.from === "clip") {
     if (!scene.clip?.src) {
       problems.push(`"${scene.id}" is a clip scene with no clip.src`);
@@ -83,7 +127,7 @@ const registry = ["scenes.ts", ...(process.env.AIEMCEE_LOCAL === "off" ? [] : ["
   .join("\n");
 const registered = new Set([...registry.matchAll(/^\s+(\w+): \{ component:/gm)].map((m) => m[1]));
 
-const needed = new Set(config.sequence.filter((s) => s.from === "motion").map((s) => s.composition));
+const needed = new Set(config.sequence.filter((s) => s.from === "motion" && !s.template).map((s) => s.composition));
 if (config.outro && !config.outro.src) needed.add(config.outro.composition);
 
 for (const id of needed) {
@@ -210,7 +254,7 @@ for (const note of notes) console.log(`  note     ${note}`);
 for (const problem of problems) console.log(`  PROBLEM  ${problem}`);
 
 const captured = config.sequence.filter((s) => s.from === "capture").length;
-const motion = config.sequence.filter((s) => s.from === "motion").length;
+const motion = config.sequence.filter((s) => s.from === "motion" || s.from === "board").length;
 const clips = config.sequence.filter((s) => s.from === "clip").length;
 const titles = config.sequence.filter((s) => s.lowerThird).length;
 

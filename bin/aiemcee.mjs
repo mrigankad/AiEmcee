@@ -29,9 +29,10 @@
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const { lowerPriority, resourceProfile } = await import(pathToFileURL(path.join(PKG_ROOT, "scripts", "lib", "resources.mjs")).href);
 const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, "package.json"), "utf8"));
 
 /** Copied into the scaffold. Shipped inline because npm strips .gitignore from tarballs. */
@@ -219,6 +220,15 @@ function stage(command, argv) {
   if (project) env.AIEMCEE_PROJECT = path.resolve(project);
   else delete env.AIEMCEE_PROJECT;
 
+  // Resolve auto once, so every stage of a film run uses the same profile, and
+  // run heavy stages below normal priority under lean (children inherit it).
+  const machine = resourceProfile({ env });
+  env.AIEMCEE_PROFILE = machine.name;
+  if (machine.requested === "auto") env.AIEMCEE_PROFILE_REASON = `auto: ${machine.why}`;
+  if (["film", "capture", "compose", "clip"].includes(command)) lowerPriority(0, machine);
+  // A draft film captures as a draft too (lean records it at 1x).
+  if (command === "film" && pass.includes("--draft")) env.AIEMCEE_CAPTURE_DRAFT = "1";
+
   const stages = command === "film" ? ["narrate", "clip", "capture", "compose"] : [command];
   for (const name of stages) {
     // A scene id narrows narrate/clip/capture; compose always builds the whole film.
@@ -345,6 +355,7 @@ function help() {
     node bin/aiemcee.mjs <stage> --project projects/<name> [--only <sceneId>]
       stages: doctor, validate, narrate, clip, capture, compose, film
       compose flags: --sound-only, --master 4k, --fast, --draft, --if-changed
+      any command: --lean | --standard   resource profile (default auto: lean under 12 GB RAM)
     node bin/aiemcee.mjs batch --projects "projects/uc-*" [--fast|--draft] [--jobs 1]
       [--stages narrate,compose] [--force]    many films, skipping up-to-date ones
     node bin/aiemcee.mjs studio [--port 4810] [--projects projects] [--host 0.0.0.0]
@@ -360,7 +371,17 @@ function help() {
 `);
 }
 
-const [command, ...rest] = process.argv.slice(2);
+// --lean / --standard pick the resource profile (scripts/lib/resources.mjs) for
+// any command, the studio included; they never reach the stage scripts.
+const argv = process.argv.slice(2).filter((a) => {
+  if (a === "--lean" || a === "--standard") {
+    process.env.AIEMCEE_PROFILE = a.slice(2);
+    return false;
+  }
+  return true;
+});
+process.argv.splice(2, Infinity, ...argv); // the studio reads its own flags from process.argv
+const [command, ...rest] = argv;
 
 switch (command) {
   case "init":

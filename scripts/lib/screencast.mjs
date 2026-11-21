@@ -19,6 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { ffAsync, ffprobeJson } from "./ffmpeg.mjs";
+import { ffmpegThreadArgs } from "./resources.mjs";
 
 /**
  * Starts a screencast on `page`, writing frames into `dir`.
@@ -94,6 +95,7 @@ export async function assemble({ frames, t0, t1 }, { dest, fps, encode, listDir 
     `fps=${fps},scale=out_color_matrix=bt709:out_range=tv:flags=neighbor,setsar=1`,
     "-t", total.toFixed(3),
     ...encode,
+    ...ffmpegThreadArgs(),
     "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
     "-an",
     "-y", dest,

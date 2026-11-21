@@ -22,6 +22,7 @@ import { SHOWREEL_SECONDS, Showreel } from "./compositions/Showreel";
 import { Film, type FilmProps } from "./film/Film";
 import type { Timeline } from "./film/types";
 import { endCardProps, pipelineProps, problemProps } from "./scenes";
+import { exampleProps, STYLE_LIST, TEMPLATE_IDS } from "./templates/registry";
 import { FPS, H, W, sec } from "./theme";
 
 /** Reads the timeline compose.mjs staged into public/, unless one is passed as a prop. */
@@ -69,6 +70,20 @@ export const RemotionRoot: React.FC = () => {
 
       {/* AiEmcee in twelve seconds: the README film. */}
       <Composition id="Showreel" component={Showreel} durationInFrames={sec(SHOWREEL_SECONDS)} {...frame} />
+
+      {/* Every style x template, with the catalog's example props: tpl-<style>-<template>. */}
+      {STYLE_LIST.flatMap((style) =>
+        TEMPLATE_IDS.map((t) => (
+          <Composition
+            key={`tpl-${style.id}-${t}`}
+            id={`tpl-${style.id}-${t}`}
+            component={style.templates[t] as React.FC<Record<string, unknown>>}
+            durationInFrames={sec(6)}
+            {...frame}
+            defaultProps={exampleProps(t) as Record<string, unknown>}
+          />
+        )),
+      )}
 
       {/* Your own scenes, from src/local.tsx */}
       <LocalCompositions />

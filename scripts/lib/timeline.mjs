@@ -25,6 +25,49 @@ delete TONES.$comment;
 
 export const TRANSITIONS = ["cut", "fade", "dip", "zoom", "push", "wipe"];
 
+/** Styles and templates (remotion/src/templates/catalog.json; docs/15-styles-and-boards.md). */
+export const CATALOG = JSON.parse(fs.readFileSync(engineAt("remotion", "src", "templates", "catalog.json"), "utf8"));
+export const STYLE_IDS = CATALOG.styles.map((s) => s.id);
+export const TEMPLATE_IDS = CATALOG.templates.map((t) => t.id);
+
+/** projects/<film>/boards.json, or null when the film has none. Throws on bad JSON. */
+export function loadBoards() {
+  const file = at("boards.json");
+  if (!fs.existsSync(file)) return null;
+  const boards = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (!Array.isArray(boards.boards)) throw new Error("boards.json: `boards` must be a list");
+  return boards;
+}
+
+/**
+ * A template scene's style: entry style -> board style -> boards.json style ->
+ * config style -> catalog default. The first one set wins; validate.mjs
+ * reports an unknown name.
+ */
+export function resolveTemplateStyle(config, entry, board = null, boards = null) {
+  return entry?.style ?? board?.style ?? boards?.style ?? config.style ?? CATALOG.defaultStyle;
+}
+
+/**
+ * What a motion or board entry draws: `{ template, style, props }` for a
+ * template scene, `{ composition }` for a registered composition.
+ */
+export function motionSource(config, entry, boards = loadBoards()) {
+  if (entry.from === "board") {
+    const board = boards?.boards.find((b) => b.id === entry.id);
+    if (!board) throw new Error(`"${entry.id}" is a board scene, but boards.json has no board "${entry.id}"`);
+    return {
+      template: board.template,
+      style: resolveTemplateStyle(config, entry, board, boards),
+      props: { ...(board.props ?? {}), ...(entry.props ?? {}) },
+    };
+  }
+  if (entry.template) {
+    return { template: entry.template, style: resolveTemplateStyle(config, entry, null, boards), props: entry.props ?? {} };
+  }
+  return { composition: entry.composition };
+}
+
 export const AVATAR_MODES = ["host", "corner", "off"];
 export const AVATAR_MOODS = ["neutral", "happy", "curious", "focused"];
 
@@ -35,7 +78,7 @@ export const AVATAR_MOODS = ["neutral", "happy", "curious", "focused"];
  */
 export function avatarFor(entry) {
   const value = entry.avatar;
-  const mode = typeof value === "string" ? value : value?.mode ?? (entry.from === "motion" || entry.from === "still" ? "off" : "corner");
+  const mode = typeof value === "string" ? value : value?.mode ?? (entry.from === "motion" || entry.from === "board" || entry.from === "still" ? "off" : "corner");
   const mood = (typeof value === "object" && value?.mood) || (mode === "host" ? "happy" : "neutral");
   return { mode, mood };
 }
@@ -132,6 +175,8 @@ export function buildTimeline(config, durations, narrationById = new Map(), { ba
     t = slot;
   }
 
+  const boards = config.sequence.some((e) => e.from === "board" || e.template) ? loadBoards() : null;
+
   config.sequence.forEach((entry, index) => {
     const line = durations[entry.id];
     if (line == null) throw new Error(`no narration duration for ${entry.id} — run \`npm run narrate\``);
@@ -156,9 +201,9 @@ export function buildTimeline(config, durations, narrationById = new Map(), { ba
         : null,
     };
 
-    if (entry.from === "motion") {
+    if (entry.from === "motion" || entry.from === "board") {
       segment.kind = "motion";
-      segment.composition = entry.composition;
+      Object.assign(segment, motionSource(config, entry, boards));
     } else if (entry.from === "still") {
       const file = at(entry.still?.src ?? "");
       if (!entry.still?.src || !fs.existsSync(file)) throw new Error(`missing still image for ${entry.id}: ${entry.still?.src}`);

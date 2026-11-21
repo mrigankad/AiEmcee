@@ -10,6 +10,7 @@ import { createRequire } from "node:module";
 
 import { at, engineAt, loadConfig, ROOT, show } from "./lib/config.mjs";
 import { describeVideo } from "./lib/ffmpeg.mjs";
+import { describeProfile, resourceProfile } from "./lib/resources.mjs";
 
 const require = createRequire(import.meta.url);
 const rows = [];
@@ -149,6 +150,13 @@ for (const row of rows) {
   console.log(`  ${row.ok ? "ok  " : "--  "}${row.label.padEnd(pad)}   ${row.detail}`);
   if (!row.ok) console.log(`      ${" ".repeat(pad)}   fix: ${row.fix}`);
 }
+
+// The resource profile: what this machine gets, and what lean would change.
+const machine = resourceProfile();
+const about = describeProfile(machine);
+console.log(`
+  profile  ${about.summary}`);
+console.log(`           ${machine.name === "lean" ? "lean is on" : "lean (--lean, or AIEMCEE_PROFILE=lean) would"}: ${about.lean.join("; ")}`);
 
 const failed = rows.filter((r) => !r.ok).length;
 console.log(

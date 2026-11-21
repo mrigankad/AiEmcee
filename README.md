@@ -51,6 +51,36 @@
 
 </div>
 
+### Styles and boards
+
+<img src="docs/media/readme-styles.jpg" alt="One pipeline scene in six styles: isometric clay, isometric blueprint, Swiss kinetic type, product UI glass, hand-drawn line, dark cinematic" width="100%">
+
+<sub>The same scene, same props, six styles. Rendered by <code>node scripts/templates.test.mjs &lt;style&gt;/pipeline --stills &lt;dir&gt;</code>.</sub>
+
+Six film styles each draw the same five scene templates: hero, pipeline, stack, metrics and end card. Pick a style when you start a film and switch it any time; the script and props stay the same.
+
+| Style | Best for |
+| --- | --- |
+| Isometric · Clay light | systems, plants, flows |
+| Isometric · Blueprint | architecture, infrastructure |
+| Swiss kinetic type | launches, hooks |
+| Product UI · Glass | SaaS features |
+| Hand-drawn line | explainers, onboarding |
+| Dark cinematic | reveals, end cards |
+
+A **board** is one scene as data (`boards.json`: template, style, props, status). In the studio, **New film** drafts a board per template in the style you pick. The **Boards** page shows each board as a live preview; you or Rasa edit it, and every change is a logged, undoable op. A sequence entry `{ id, from: "board" }` renders the board in the film, timed to its narration line.
+
+- Motion runs on **GSAP**, driven by the film's frame clock, so every frame is exact and renders in parallel.
+- Icons come from **Emcee Glyphs**, our own 24-glyph set (`assets/glyphs/`), restyled per film style.
+- In a config you can also write `{ id, from: "motion", template: "pipeline", style: "swiss", props: { … } }` directly.
+
+See [docs/15-styles-and-boards.md](docs/15-styles-and-boards.md).
+
+### Runs on an 8 GB laptop, or as a Windows app
+
+- **Lean mode** turns on by itself below 12 GB of RAM (or pass `--lean`). It uses 2 render pages in one Chromium, small caches, 1× draft captures, and below-normal priority. On the smoke film, peak memory roughly halves and the render takes about 40% longer. `aiemcee doctor` shows the profile it picked.
+- **`AiEmcee.exe`** (`npm run build:exe`) is a small launcher. It starts the studio and opens it in an Edge app window: no Electron, no second browser. See [docs/16-desktop-and-memory.md](docs/16-desktop-and-memory.md).
+
 ---
 
 ## Quickstart
@@ -375,6 +405,9 @@ For a complete shipped film, annotated scene by scene, see
 | [12 Engine roadmap](docs/12-engine-roadmap.md) | how the engine got fast, phase by phase |
 | [13 Studio backend](docs/13-backend.md) | the studio server: API, versions, review, sharing, roles, security |
 | [14 Motion engine](docs/14-motion-engine.md) | how frames are drawn, footage, profiles, tuning, measurements |
+| [15 Styles and boards](docs/15-styles-and-boards.md) | the six styles, scene templates, boards, the boards API, GSAP motion |
+| [16 Desktop and memory](docs/16-desktop-and-memory.md) | lean mode for 8 GB machines, measured numbers, building AiEmcee.exe |
+| [Competitive landscape](docs/research/2026-11-competitive-landscape.md) | the market as of November 2026, Motlab, and what to build next |
 
 ---
 

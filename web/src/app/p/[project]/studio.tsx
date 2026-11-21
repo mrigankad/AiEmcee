@@ -1,15 +1,18 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import { Chat } from "@/components/film/chat";
 import { Player } from "@/components/film/player";
 import { EditorTab, JobsTab, ReviewTab, ScriptTab, ShareTab, VersionsTab } from "@/components/film/tabs";
+import { Glyph } from "@/components/glyph";
 import { Topbar } from "@/components/topbar";
 import { Button, Pill } from "@/components/ui";
 import { api, ApiError, can, type Film, type Job, projectUrl, type ProjectInfo } from "@/lib/api";
 import { useLive } from "@/lib/live";
+import { useEntrance } from "@/lib/motion";
 import { useSession } from "@/lib/session";
 import { toastError } from "@/lib/toast";
 
@@ -118,6 +121,13 @@ export function Studio({ project }: { project: string }) {
     <div className="flex min-h-0 flex-1">
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar crumbs={[{ label: "Films", href: "/" }, { label: project }]}>
+          <Link
+            href={`/p/${encodeURIComponent(project)}/boards`}
+            className="inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-body transition hover:bg-sunk hover:text-ink"
+            title="Storyboard: one board per scene"
+          >
+            <Glyph name="boards" size={14} /> Boards
+          </Link>
           {mine.length > 0 && <Pill tone="warn">{mine[0].status === "running" ? `${mine[0].stage} ${mine[0].flags.join(" ")}…` : `${mine.length} queued`}</Pill>}
           {editor && (
             <>
@@ -158,6 +168,16 @@ export function Studio({ project }: { project: string }) {
 
 function Tab({ ctx }: { ctx: Ctx }) {
   const tab = useSearchParams().get("tab") ?? "editor";
+  const panel = useRef<HTMLDivElement>(null);
+  useEntrance(panel, ":scope > *", [tab], { y: 6, stagger: 0 });
+  return (
+    <div ref={panel} className="flex flex-col">
+      <TabBody ctx={ctx} tab={tab} />
+    </div>
+  );
+}
+
+function TabBody({ ctx, tab }: { ctx: Ctx; tab: string }) {
   switch (tab) {
     case "script":
       return <ScriptTab ctx={ctx} />;
