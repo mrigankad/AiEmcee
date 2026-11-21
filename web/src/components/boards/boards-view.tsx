@@ -43,6 +43,9 @@ export function BoardsView({ project }: { project: string }) {
   const [drawing, setDrawing] = useState<Record<string, number>>({});
   const [cursor, setCursor] = useState<{ label: string; x: number; y: number; key: string; id: string } | null>(null);
   const [still, setStill] = useState<string | null>(null);
+  // What the server has saved. Previews render from the server's copy, so they key on this,
+  // never on the optimistic local edit (which would fetch the old frame before the save lands).
+  const [saved, setSaved] = useState<BoardsFile | null>(null);
   const [stillDone, setStillDone] = useState<{ key: string; error: string | null }>({ key: "", error: null });
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [chat, setChat] = useState({ busy: false, reply: "" });
@@ -55,6 +58,7 @@ export function BoardsView({ project }: { project: string }) {
       .then(({ file, missing }) => {
         if (!live) return;
         setFile(file);
+        setSaved(file);
         setMissing(missing);
         setSelected((s) => s ?? file.boards[0]?.id ?? null);
       })
@@ -81,10 +85,13 @@ export function BoardsView({ project }: { project: string }) {
       setLog((l) => [...l, ...ops.map((op) => ({ key: key(), at: Date.now(), by: "you", op }))]);
       try {
         const next = await applyOps(project, ops);
-        if (next?.boards) setFile(pending.current.size ? applyLocal(next, pendingOps()) : next);
+        if (next?.boards) {
+          setSaved(next);
+          setFile(pending.current.size ? applyLocal(next, pendingOps()) : next);
+        }
       } catch (e) {
         toastError(e);
-        getBoards(project).then(({ file }) => setFile(file)).catch(() => {});
+        getBoards(project).then(({ file }) => (setFile(file), setSaved(file))).catch(() => {});
       }
     },
     [project],
@@ -121,7 +128,10 @@ export function BoardsView({ project }: { project: string }) {
     const stamp = JSON.stringify(e.ops ?? []);
     const ours = sent.current.has(stamp);
     if (ours) sent.current.delete(stamp);
-    if (e.boards) setFile(pending.current.size ? applyLocal(e.boards, pendingOps()) : e.boards);
+    if (e.boards) {
+      setSaved(e.boards);
+      setFile(pending.current.size ? applyLocal(e.boards, pendingOps()) : e.boards);
+    }
     if (ours || !e.ops?.length) return;
     const by = e.by ?? "agent";
     const now = Date.now();
@@ -158,7 +168,8 @@ export function BoardsView({ project }: { project: string }) {
   }, [file, catalog]);
   const style = file ? resolveStyle(board, file, catalog) : filmStyle;
   const seconds = Math.max(1, (board && durations[board.id]) || 6);
-  const version = board ? hashBoard(board, style) : "";
+  const savedBoard = saved?.boards.find((b) => b.id === board?.id);
+  const version = savedBoard && saved ? hashBoard(savedBoard, resolveStyle(savedBoard, saved, catalog)) : "";
 
 
   const stateOf = (b: Board): RowState => {
